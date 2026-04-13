@@ -1,18 +1,11 @@
 <?php
 
-use App\Helpers\CustomPageHelper;
+use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\Admin\Article\ArticleController;
+Route::get('/register', 'RegistrationController@showRegistrationForm')->name('flip-city.register.show');
+Route::post('/register', 'RegistrationController@register')->name('flip-city.register');
 
-Route::namespace('App\Http\Controllers\Site')->domain(getSiteDomain())->middleware('web', 'site_share')->group(function () {
-
-});
-
-Route::namespace('App\Http\Controllers\Admin')->domain(getAdminDomain())->middleware('web', 'admin_share')->group(function () {
-
-    Route::middleware('auth:admin')->group(function () {
-        Route::namespace('Article')->group(function () {
-
-        });
-    });
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', 'ProfileController@index')->name('flip-city.profile');
+    Route::post('/booking', 'BookingController@store')->name('flip-city.booking.store');
 });

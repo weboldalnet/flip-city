@@ -1,21 +1,23 @@
 {
     "name": "weboldalnet/flip-city",
-    "description": "teszt",
+    "description": "Trambulin Beléptető Rendszer és Szülinap Foglalási Rendszer",
     "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0",
+        "simplesoftwareio/simple-qrcode": "^4.2"
+    },
     "autoload": {
         "psr-4": {
-            "Weboldalnet\\PackageTemplate\\": [ "src/",  "app/"]
+            "Weboldalnet\\FlipCity\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Weboldalnet\\PackageTemplate\\ArticleServiceProvider"
-            ],
-            "aliases": {
-                "ArticleServiceProvider": "Weboldalnet\\PackageTemplate\\ArticleServiceProvider"
-            }
+                "Weboldalnet\\FlipCity\\Providers\\FlipCityServiceProvider"
+            ]
         }
-    },
-    "require": {}
+    }
 }
