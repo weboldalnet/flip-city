@@ -16,9 +16,9 @@ return [
 
     'routes' => [
         'prefix' => 'flip-city',
-        'admin_prefix' => 'admin/flip-city',
+        'admin_prefix' => 'flip-city',
         'middleware' => ['web'],
-        'admin_middleware' => ['web', 'auth'], // Igény szerint módosítható
+        'admin_middleware' => ['web', 'auth:admin'],
     ],
 
     'assets' => [

@@ -1,11 +1,11 @@
 <?php
 
-namespace Weboldalnet\PackageTemplate\Support;
+namespace Weboldalnet\FlipCity\Support;
 
 class PackageHelper
 {
-    const PACKAGE_NAME = 'Blog/Cikkek modul';
-    const PACKAGE_PREFIX = 'article';
+    const PACKAGE_NAME = 'Flip-City Beléptető Rendszer';
+    const PACKAGE_PREFIX = 'flip-city';
 
     const PACKAGE_LIST = [
         'app' => [

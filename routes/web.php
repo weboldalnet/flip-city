@@ -3,19 +3,21 @@
 use Illuminate\Support\Facades\Route;
 
 
-Route::namespace('Weboldalnet\FlipCity\Http\Controllers\Site')->domain(getSiteDomain())->middleware('web', 'site_share')->group(function () {
-    Route::get('/register', 'RegistrationController@showRegistrationForm')->name('flip-city.register.show');
-    Route::post('/register', 'RegistrationController@register')->name('flip-city.register');
+Route::middleware('web')->group(function () {
+    // Site routes
+    Route::namespace('Weboldalnet\FlipCity\Http\Controllers\Site')->group(function () {
+        Route::get('/register', 'RegistrationController@showRegistrationForm')->name('flip-city.register.show');
+        Route::post('/register', 'RegistrationController@register')->name('flip-city.register');
 
-    Route::middleware('auth')->group(function () {
-        Route::get('/profile', 'ProfileController@index')->name('flip-city.profile');
-        Route::post('/booking', 'BookingController@store')->name('flip-city.booking.store');
+        Route::middleware('auth')->group(function () {
+            Route::get('/profile', 'ProfileController@index')->name('flip-city.profile');
+            Route::post('/booking', 'BookingController@store')->name('flip-city.booking.store');
+        });
     });
-});
 
-Route::namespace('Weboldalnet\FlipCity\Http\Controllers\Admin')->domain(getAdminDomain())->middleware('web', 'admin_share')->group(function () {
-    Route::middleware('auth:admin')->group(function () {
-        Route::namespace('FlipCity')->group(function () {
+    // Admin routes with /flip-city prefix
+    Route::prefix(config('flip-city.routes.admin_prefix', 'flip-city'))->namespace('Weboldalnet\FlipCity\Http\Controllers\Admin')->group(function () {
+        Route::middleware(config('flip-city.routes.admin_middleware', ['web', 'auth:admin']))->group(function () {
             Route::get('/', 'DashboardController@index')->name('flip-city.admin.dashboard');
             Route::post('/close-day', 'DashboardController@closeDay')->name('flip-city.admin.close-day');
 

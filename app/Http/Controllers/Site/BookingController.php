@@ -2,13 +2,13 @@
 
 namespace Weboldalnet\FlipCity\Http\Controllers\Site;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Site\SiteExtendedController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Weboldalnet\FlipCity\Models\Booking;
 
-class BookingController extends Controller
+class BookingController extends SiteExtendedController
 {
     public function store(Request $request)
     {

@@ -2,15 +2,15 @@
 
 namespace Weboldalnet\FlipCity\Http\Controllers\Site;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Weboldalnet\FlipCity\Models\User;
+use App\Http\Controllers\Site\SiteExtendedController;
 
-class RegistrationController extends Controller
+class RegistrationController extends SiteExtendedController
 {
+    public function showRegistrationForm()
+    {
+        return view('flip-city::site.flip-city.register');
+    }
+
     public function register(Request $request)
     {
         $validated = $request->validate([

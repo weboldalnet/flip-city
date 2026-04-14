@@ -2,10 +2,10 @@
 
 namespace Weboldalnet\FlipCity\Http\Controllers\Site;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Site\SiteExtendedController;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
-class ProfileController extends Controller
+class ProfileController extends SiteExtendedController
 {
     public function index()
     {
