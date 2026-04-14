@@ -1,0 +1,152 @@
+@extends('site.layouts.layout')
+
+@section('content')
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Saját QR kód</h5>
+                    <div class="qr-code-container mb-3 p-3 bg-light d-inline-block border qr-code-svg">
+                        <style>.qr-code-svg svg { width: 100%; height: auto; max-width: 250px; }</style>
+                        {!! $qrCode !!}
+                    </div>
+                    <p class="text-muted small">Ezzel a kóddal tudsz belépni a trambulin parkba.</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="window.print()"><i class="fas fa-print mr-1"></i> Nyomtatás</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Profil adatok</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 font-weight-bold">Név:</div>
+                        <div class="col-sm-8">{{ $user->name }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 font-weight-bold">E-mail:</div>
+                        <div class="col-sm-8">{{ $user->email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 font-weight-bold">Telefonszám:</div>
+                        <div class="col-sm-8">{{ $user->phone ?? '-' }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 font-weight-bold">Egyenleg:</div>
+                        <div class="col-sm-8 text-success font-weight-bold">{{ number_format($user->balance, 0, ',', ' ') }} Ft</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 font-weight-bold">Státusz:</div>
+                        <div class="col-sm-8">
+                            @if($user->is_blocked)
+                                <span class="badge badge-danger">Tiltva</span>
+                            @elseif($user->is_active)
+                                <span class="badge badge-success">Aktív</span>
+                            @else
+                                <span class="badge badge-warning">Inaktív</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if($activeEntries->isNotEmpty())
+            <div class="card shadow mt-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0 font-weight-bold"><i class="fas fa-clock mr-2"></i>Aktuális Belépések</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Kezdés</th>
+                                <th>Létszám</th>
+                                <th>Eltelt idő</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($activeEntries as $entry)
+                            <tr>
+                                <td>{{ $entry->start_time->format('H:i') }}</td>
+                                <td>{{ $entry->guest_count }} fő</td>
+                                <td>{{ $entry->start_time->diffInMinutes() }} perc</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            @if($upcomingBookings->isNotEmpty())
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check mr-2"></i>Közelgő Foglalásaid</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Dátum</th>
+                                <th>Időpont</th>
+                                <th>Létszám</th>
+                                <th>Státusz</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($upcomingBookings as $booking)
+                            <tr>
+                                <td>{{ $booking->booking_date }}</td>
+                                <td>{{ date('H:i', strtotime($booking->booking_time)) }}</td>
+                                <td>{{ $booking->guest_count }} fő</td>
+                                <td>
+                                    <span class="badge badge-{{ $booking->status === 'confirmed' ? 'success' : 'secondary' }}">
+                                        {{ $booking->status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Szülinap Foglalás</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('flip-city.booking.store') }}" method="POST">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Dátum</label>
+                                    <input type="date" name="booking_date" class="form-control" required min="{{ date('Y-m-d') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Időpont</label>
+                                    <input type="time" name="booking_time" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Gyermekek száma</label>
+                                    <input type="number" name="guest_count" class="form-control" required min="1">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-info">Foglalás rögzítése</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

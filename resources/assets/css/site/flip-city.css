@@ -1,0 +1,34 @@
+.qr-code-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+.card {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    .qr-code-container, .qr-code-container * {
+        visibility: visible;
+    }
+    .qr-code-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        text-align: center;
+        box-shadow: none;
+        border: none;
+    }
+}

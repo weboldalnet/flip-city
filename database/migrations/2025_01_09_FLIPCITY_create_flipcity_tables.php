@@ -14,14 +14,17 @@ return new class extends Migration
             CREATE TABLE flip_city_users (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE,
                 phone VARCHAR(50),
-                password VARCHAR(255) NOT NULL,
+                password VARCHAR(255),
                 billing_details TEXT,
                 terms_accepted BOOLEAN NOT NULL DEFAULT FALSE,
                 qr_code_token VARCHAR(255) UNIQUE,
-                is_active BOOLEAN NOT NULL DEFAULT TRUE,
+                qr_code_svg TEXT,
+                is_active BOOLEAN NOT NULL DEFAULT FALSE,
                 is_blocked BOOLEAN NOT NULL DEFAULT FALSE,
+                activation_token VARCHAR(255),
+                activated_at TIMESTAMP WITHOUT TIME ZONE,
                 balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
                 card_registered BOOLEAN NOT NULL DEFAULT FALSE,
                 remember_token VARCHAR(100),
@@ -87,6 +90,14 @@ return new class extends Migration
                 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
         ");
+
+        DB::statement("
+            CREATE TABLE password_reset_tokens (
+                email VARCHAR(255) PRIMARY KEY,
+                token VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        ");
     }
 
     /**
@@ -94,6 +105,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::statement("DROP TABLE IF EXISTS password_reset_tokens;");
         DB::statement("DROP TABLE IF EXISTS flip_city_daily_summaries;");
         DB::statement("DROP TABLE IF EXISTS flip_city_invoices;");
         DB::statement("DROP TABLE IF EXISTS flip_city_bookings;");

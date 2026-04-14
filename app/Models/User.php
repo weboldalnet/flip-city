@@ -4,6 +4,7 @@ namespace Weboldalnet\FlipCity\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * Weboldalnet\FlipCity\Models\User
@@ -16,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $billing_details
  * @property bool $terms_accepted
  * @property string|null $qr_code_token
+ * @property string|null $qr_code_svg
+ * @property string|null $activation_token
+ * @property \Illuminate\Support\Carbon|null $activated_at
  * @property bool $is_active
  * @property bool $is_blocked
  * @property float $balance
@@ -27,14 +31,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection|\Weboldalnet\FlipCity\Models\Booking[] $bookings
  * @property-read \Illuminate\Database\Eloquent\Collection|\Weboldalnet\FlipCity\Models\Invoice[] $invoices
  */
-class User extends Model
+class User extends Authenticatable
 {
+    use \Illuminate\Notifications\Notifiable;
+
     protected $table = 'flip_city_users';
 
     protected $fillable = [
         'name', 'email', 'phone', 'password', 'billing_details',
-        'terms_accepted', 'qr_code_token', 'is_active', 'is_blocked',
-        'balance', 'card_registered'
+        'terms_accepted', 'qr_code_token', 'qr_code_svg', 'activation_token', 'activated_at',
+        'is_active', 'is_blocked', 'balance', 'card_registered'
     ];
 
     protected $casts = [
@@ -43,6 +49,7 @@ class User extends Model
         'is_blocked' => 'boolean',
         'card_registered' => 'boolean',
         'balance' => 'float',
+        'activated_at' => 'datetime',
     ];
 
     public function entries(): HasMany
