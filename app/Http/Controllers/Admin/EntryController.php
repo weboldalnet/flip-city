@@ -2,11 +2,10 @@
 
 namespace Weboldalnet\FlipCity\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
-use Weboldalnet\FlipCity\Models\User;
-use Weboldalnet\FlipCity\Models\Entry;
-use Weboldalnet\FlipCity\Models\Invoice;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Weboldalnet\FlipCity\Models\Entry;
+use Weboldalnet\FlipCity\Models\User;
 
 class EntryController extends FlipCityAdminController
 {

@@ -1,13 +1,13 @@
 <?php
 
-namespace Weboldalnet\PackageTemplate;
+namespace Weboldalnet\FlipCity;
 
 use Illuminate\Support\ServiceProvider;
+use Weboldalnet\FlipCity\Console\ExtendViewsArticlesCommand;
+use Weboldalnet\FlipCity\Console\InstallArticlesCommand;
 use Weboldalnet\PackageTemplate\Support\PackageHelper;
-use Weboldalnet\PackageTemplate\Console\ExtendViewsArticlesCommand;
-use Weboldalnet\PackageTemplate\Console\InstallArticlesCommand;
 
-class ArticleServiceProvider extends ServiceProvider
+class FlipCityServiceProvider extends ServiceProvider
 {
     public function boot()
     {

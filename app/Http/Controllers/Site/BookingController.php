@@ -4,9 +4,9 @@ namespace Weboldalnet\FlipCity\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Weboldalnet\FlipCity\Models\Booking;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Weboldalnet\FlipCity\Models\Booking;
 
 class BookingController extends Controller
 {

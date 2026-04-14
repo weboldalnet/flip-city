@@ -10,13 +10,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Weboldalnet\\FlipCity\\": "src/"
+            "Weboldalnet\\FlipCity\\": ["src/", "app/"]
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Weboldalnet\\FlipCity\\Providers\\FlipCityServiceProvider"
+                "Weboldalnet\\FlipCity\\FlipCityServiceProvider"
             ]
         }
     }

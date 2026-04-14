@@ -2,12 +2,11 @@
 
 namespace Weboldalnet\FlipCity\Http\Controllers\Admin;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Weboldalnet\FlipCity\Models\DailySummary;
-use Weboldalnet\FlipCity\Models\Invoice;
-use Weboldalnet\FlipCity\Models\User;
 use Weboldalnet\FlipCity\Models\Entry;
-use Carbon\Carbon;
+use Weboldalnet\FlipCity\Models\Invoice;
 
 class DashboardController extends FlipCityAdminController
 {

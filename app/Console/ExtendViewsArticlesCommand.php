@@ -1,10 +1,11 @@
 <?php
 
-namespace Weboldalnet\PackageTemplate\Console;
+namespace Weboldalnet\FlipCity\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Weboldalnet\PackageTemplate\Support\PackageHelper;
+use function Weboldalnet\PackageTemplate\Console\base_path;
 
 class ExtendViewsArticlesCommand extends Command
 {

@@ -3,10 +3,10 @@
 namespace Weboldalnet\FlipCity\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
-use Weboldalnet\FlipCity\Models\Invoice;
-use Weboldalnet\FlipCity\Models\Entry;
-use Weboldalnet\FlipCity\Models\DailySummary;
 use Illuminate\Support\Str;
+use Weboldalnet\FlipCity\Models\DailySummary;
+use Weboldalnet\FlipCity\Models\Entry;
+use Weboldalnet\FlipCity\Models\Invoice;
 
 class InvoiceController extends FlipCityAdminController
 {

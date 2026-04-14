@@ -1,6 +1,6 @@
 <?php
 
-namespace Weboldalnet\PackageTemplate\Console;
+namespace Weboldalnet\FlipCity\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
