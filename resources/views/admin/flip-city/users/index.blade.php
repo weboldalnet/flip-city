@@ -74,7 +74,7 @@
                                     {{ $user->name }}
                                 </a>
                             </td>
-                            <td>{{ $user->email ?? '<span class="text-muted small">–</span>' }}</td>
+                            <td>{{ $user->email ?? '–' }}</td>
                             <td>{{ $user->phone ?? '–' }}</td>
                             <td class="text-right">
                                 <span class="{{ $user->balance > 0 ? 'text-success' : 'text-muted' }}">
@@ -100,6 +100,11 @@
                             </td>
                             <td class="small text-muted">{{ $user->created_at->format('Y.m.d') }}</td>
                             <td class="text-center text-nowrap">
+                                <button type="button" class="btn btn-xs btn-success checkin-manual-btn" 
+                                        data-id="{{ $user->id }}" data-name="{{ $user->name }}" 
+                                        title="Beléptetés (manuális)">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </button>
                                 <a href="{{ route('flip-city.admin.users.show', $user->id) }}"
                                    class="btn btn-xs btn-info" title="Részletek">
                                     <i class="fas fa-eye"></i>
@@ -188,6 +193,48 @@
         </div>
     </div>
 </div>
+
+<!-- Checkin Manual Modal -->
+<div class="modal fade" id="checkinManualModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Beléptetés</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST">
+                @csrf
+                <input type="hidden" name="user_id" id="checkin_user_id">
+                <div class="modal-body">
+                    <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
+                    <div class="form-group">
+                        <label>Létszám (fő) <span class="text-danger">*</span></label>
+                        <input type="number" name="guest_count" class="form-control" value="1" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-play mr-1"></i> Beléptetés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    $('.checkin-manual-btn').on('click', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        
+        $('#checkin_user_id').val(id);
+        $('#checkin_user_name').text(name);
+        $('#checkinManualModal').modal('show');
+    });
+});
+</script>
 
 <link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
 @endsection

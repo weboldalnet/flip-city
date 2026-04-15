@@ -65,14 +65,25 @@
                                 <th>Kezdés</th>
                                 <th>Létszám</th>
                                 <th>Eltelt idő</th>
+                                <th class="text-right">Várható díj</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($activeEntries as $entry)
-                            <tr>
+                            <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}">
                                 <td>{{ $entry->start_time->format('H:i') }}</td>
-                                <td>{{ $entry->guest_count }} fő</td>
-                                <td>{{ $entry->start_time->diffInMinutes() }} perc</td>
+                                <td class="guest-count">{{ $entry->guest_count }} fő</td>
+                                <td class="elapsed-time" data-start="{{ $entry->start_time->toISOString() }}">
+                                    @php 
+                                        $diffInSeconds = $entry->start_time->diffInSeconds(now());
+                                        $durationMinutes = ceil($diffInSeconds / 60);
+                                        if ($durationMinutes < 1) $durationMinutes = 1;
+                                    @endphp
+                                    {{ $durationMinutes }} perc
+                                </td>
+                                <td class="text-right text-warning font-weight-bold expected-fee">
+                                    {{ number_format(round(($durationMinutes / 60) * $entry->rate * $entry->guest_count), 0, ',', ' ') }} Ft
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>

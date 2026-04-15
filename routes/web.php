@@ -12,7 +12,7 @@ Route::middleware('web')->group(function () {
             // Auth flow
             Route::get('/flip-city/login', 'LoginController@showLoginForm')->name('flip-city.login.show');
             Route::post('/flip-city/login', 'LoginController@login')->name('flip-city.login');
-            Route::post('/flip-city/logout', 'LoginController@logout')->name('flip-city.logout');
+            Route::get('/flip-city/logout', 'LoginController@logout')->name('flip-city.logout');
 
             Route::get('/flip-city/register', 'RegistrationController@showRegistrationForm')->name('flip-city.register.show');
             Route::post('/flip-city/register', 'RegistrationController@register')->name('flip-city.register');
@@ -45,6 +45,7 @@ Route::middleware('web')->group(function () {
                 // Belépések
                 Route::get('/entries', 'EntryController@index')->name('flip-city.admin.entries');
                 Route::post('/entries', 'EntryController@store')->name('flip-city.admin.entries.store');
+                Route::post('/entries/store-manual', 'EntryController@storeManual')->name('flip-city.admin.entries.store-manual');
                 Route::post('/entries/scan', 'EntryController@scan')->name('flip-city.admin.entries.scan');
                 Route::post('/entries/{entry}/checkout', 'EntryController@checkout')->name('flip-city.admin.entries.checkout');
                 Route::post('/entries/{entry}/finalize-checkout', 'EntryController@finalizeCheckout')->name('flip-city.admin.entries.finalize-checkout');

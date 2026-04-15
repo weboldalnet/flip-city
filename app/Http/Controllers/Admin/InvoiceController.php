@@ -25,6 +25,7 @@ class InvoiceController extends FlipCityAdminController
             'entry_id'       => 'required|exists:flip_city_entries,id',
             'payment_method' => 'required|in:cash,card',
             'cash_received'  => 'required_if:payment_method,cash|nullable|numeric|min:0',
+            'final_cost'     => 'nullable|numeric|min:0',
         ]);
 
         $entry = Entry::findOrFail($validated['entry_id']);
@@ -32,8 +33,16 @@ class InvoiceController extends FlipCityAdminController
         // Lezárjuk a belépést, ha még nincs lezárva
         if (!$entry->end_time) {
             $entry->end_time = now();
-            $durationMinutes = max(1, $entry->start_time->diffInMinutes($entry->end_time));
-            $entry->total_cost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count);
+            
+            // Ha a frontend küldött egy rögzített (megállított) összeget, használjuk azt
+            if (isset($validated['final_cost'])) {
+                $entry->total_cost = (float) $validated['final_cost'];
+            } else {
+                $diffInSeconds = $entry->start_time->diffInSeconds($entry->end_time);
+                $durationMinutes = ceil($diffInSeconds / 60);
+                if ($durationMinutes < 1) $durationMinutes = 1;
+                $entry->total_cost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count);
+            }
             $entry->save();
         }
 

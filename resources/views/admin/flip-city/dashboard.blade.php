@@ -1,6 +1,9 @@
 @extends("admin.layouts.layout")
 
+@section('title', 'Flip-City Dashboard')
+
 @section("content")
+    
 <div class="container-fluid flip-city-admin">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Flip-City Dashboard</h1>
@@ -54,15 +57,20 @@
                             </thead>
                             <tbody>
                                 @forelse($activeEntries as $entry)
-                                <tr>
+                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}">
                                     <td class="font-weight-bold">{{ $entry->user->name ?? '–' }}</td>
                                     <td>{{ $entry->start_time->format('H:i') }}</td>
                                     <td class="elapsed-time" data-start="{{ $entry->start_time->toISOString() }}">
-                                        {{ $entry->start_time->diffInMinutes() }} perc
+                                        @php 
+                                            $diffInSeconds = $entry->start_time->diffInSeconds(now());
+                                            $durationMinutes = ceil($diffInSeconds / 60);
+                                            if ($durationMinutes < 1) $durationMinutes = 1;
+                                        @endphp
+                                        {{ $durationMinutes }} perc
                                     </td>
-                                    <td class="text-center">{{ $entry->guest_count }}</td>
-                                    <td class="text-center text-warning font-weight-bold">
-                                        {{ number_format(round(($entry->start_time->diffInMinutes() / 60) * $entry->rate * $entry->guest_count), 0, ',', ' ') }} Ft
+                                    <td class="text-center guest-count">{{ $entry->guest_count }}</td>
+                                    <td class="text-center text-warning font-weight-bold expected-fee">
+                                        {{ number_format(round(($durationMinutes / 60) * $entry->rate * $entry->guest_count), 0, ',', ' ') }} Ft
                                     </td>
                                     <td class="text-center text-nowrap">
                                         <button class="btn btn-sm btn-danger checkout-btn"
@@ -290,21 +298,64 @@
                 <h5 class="modal-title"><i class="fas fa-users mr-2"></i>Részleges Kiléptetés</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body">
-                <p>Összesen <strong id="partial_total_guests">0</strong> fő tartózkodik bent.</p>
-                <div class="form-group">
-                    <label for="partial_leaving_count">Hányan távoznak?</label>
-                    <input type="number" id="partial_leaving_count" class="form-control form-control-lg"
-                           value="1" min="1" max="1">
+            <form id="partial_checkout_form">
+                @csrf
+                <input type="hidden" name="entry_id" id="partial_entry_id">
+                <div class="modal-body">
+                    <p>Összesen <strong id="partial_total_guests">0</strong> fő tartózkodik bent.</p>
+                    <div class="form-group">
+                        <label for="partial_leaving_count">Hányan távoznak?</label>
+                        <input type="number" id="partial_leaving_count" class="form-control form-control-lg"
+                               value="1" min="1" max="1">
+                    </div>
+
+                    <div id="partial_payment_details" style="display: none;">
+                        <hr>
+                        <div class="alert alert-info mb-4">
+                            <div class="h4 mb-1">Fizetendő összeg:</div>
+                            <div class="display-4 font-weight-bold text-danger">
+                                <span id="partial_checkout_amount">0</span> Ft
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fizetési mód</label>
+                            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
+                                <label class="btn btn-outline-success active">
+                                    <input type="radio" name="partial_payment_method" id="partial_pay_cash" value="cash" checked>
+                                    <i class="fas fa-money-bill-wave mr-1"></i> Készpénz
+                                </label>
+                                <label class="btn btn-outline-primary">
+                                    <input type="radio" name="partial_payment_method" id="partial_pay_card" value="card">
+                                    <i class="fas fa-credit-card mr-1"></i> Bankkártya
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="partial_cash_details">
+                            <div class="form-group">
+                                <label for="partial_cash_received">Kapott összeg (Ft)</label>
+                                <input type="number" id="partial_cash_received"
+                                       class="form-control form-control-lg" min="0" step="100" placeholder="0">
+                            </div>
+                            <div class="alert alert-success">
+                                Visszajáró: <strong><span id="partial_change_amount">0</span> Ft</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="partial_result"></div>
                 </div>
-                <div id="partial_result"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
-                <button type="button" id="partial_confirm_btn" class="btn btn-warning">
-                    <i class="fas fa-check mr-1"></i> Részleges Kiléptetés
-                </button>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
+                    <button type="button" id="partial_calc_btn" class="btn btn-info">
+                        <i class="fas fa-calculator mr-1"></i> Összeg számítása
+                    </button>
+                    <button type="submit" id="partial_confirm_btn" class="btn btn-warning" style="display: none;">
+                        <i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

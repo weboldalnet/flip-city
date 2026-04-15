@@ -3,6 +3,7 @@ $(document).ready(function () {
     var currentEntryId = null;
     var currentPartialEntryId = null;
     var html5QrCode = null;
+    var timerPaused = false;
     
     // -------------------------------------------------------
     // QR Beolvasó Modal és Kamera
@@ -12,10 +13,13 @@ $(document).ready(function () {
         $('#qr_result').html('');
         $('#qr_guest_count_wrap').addClass('d-none');
         startCamera();
+        timerPaused = true;
     });
 
     $('#scanQrModal').on('hidden.bs.modal', function () {
         stopCamera();
+        timerPaused = false;
+        updateElapsedTimes();
     });
 
     function startCamera() {
@@ -161,7 +165,13 @@ $(document).ready(function () {
         openCheckout(entryId);
     });
 
+    $('#checkoutModal').on('hidden.bs.modal', function () {
+        timerPaused = false;
+        updateElapsedTimes();
+    });
+
     function openCheckout(entryId) {
+        timerPaused = true;
         currentEntryId = entryId;
         $('#checkout_entry_id').val(entryId);
         $('#checkout_amount').text('...');
@@ -220,6 +230,7 @@ $(document).ready(function () {
         var cashReceived = $('#cash_received').val();
         var entryId = $('#checkout_entry_id').val();
         var amount = parseFloat($('#checkout_amount').text().replace(/\s/g, '')) || 0;
+        var duration = $('#checkout_duration').text(); // Ezt a szerver válaszából kaptuk
 
         if (paymentMethod === 'cash' && (!cashReceived || parseFloat(cashReceived) < amount)) {
             alert('A kapott összeg nem lehet kevesebb a fizetendőnél (' + numberFormat(amount) + ' Ft)!');
@@ -236,7 +247,8 @@ $(document).ready(function () {
                 _token: csrfToken,
                 entry_id: entryId,
                 payment_method: paymentMethod,
-                cash_received: cashReceived || null
+                cash_received: cashReceived || null,
+                final_cost: amount // Beküldjük a rögzített összeget
             },
             success: function (response) {
                 if (response.success) {
@@ -264,17 +276,36 @@ $(document).ready(function () {
     // Részleges kiléptetés
     // -------------------------------------------------------
     $(document).on('click', '.partial-btn', function () {
+        timerPaused = true;
         var entryId = $(this).data('id');
         var max = parseInt($(this).data('max'));
         currentPartialEntryId = entryId;
 
+        $('#partial_entry_id').val(entryId);
         $('#partial_total_guests').text(max);
-        $('#partial_leaving_count').attr('max', max - 1).val(1);
+        $('#partial_leaving_count').attr('max', max - 1).val(1).prop('disabled', false);
         $('#partial_result').html('');
+        
+        // Form alaphelyzetbe
+        $('#partial_payment_details').hide();
+        $('#partial_calc_btn').show();
+        $('#partial_confirm_btn').hide();
+        $('#partial_cash_received').val('');
+        $('#partial_change_amount').text('0');
+        $('#partial_pay_cash').prop('checked', true).closest('label').addClass('active');
+        $('#partial_pay_card').closest('label').removeClass('active');
+        $('#partial_cash_details').show();
+
         $('#partialCheckoutModal').modal('show');
     });
 
-    $('#partial_confirm_btn').on('click', function () {
+    $('#partialCheckoutModal').on('hidden.bs.modal', function () {
+        timerPaused = false;
+        updateElapsedTimes();
+    });
+
+    // Részleges számolás gomb
+    $('#partial_calc_btn').on('click', function () {
         var leavingCount = parseInt($('#partial_leaving_count').val());
         var max = parseInt($('#partial_leaving_count').attr('max')) + 1;
 
@@ -284,6 +315,68 @@ $(document).ready(function () {
         }
 
         var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Számolás...');
+
+        $.ajax({
+            url: '/flip-city/entries/' + currentPartialEntryId + '/checkout',
+            method: 'POST',
+            data: { 
+                _token: csrfToken,
+                partial: true,
+                leaving_count: leavingCount
+            },
+            success: function (response) {
+                $btn.prop('disabled', false).html('<i class="fas fa-calculator mr-1"></i> Összeg számítása');
+                if (response.success) {
+                    $('#partial_checkout_amount').text(numberFormat(response.total_cost));
+                    $('#partial_payment_details').fadeIn();
+                    $('#partial_calc_btn').hide();
+                    $('#partial_confirm_btn').show();
+                    $('#partial_leaving_count').prop('disabled', true);
+                    $('#partial_result').html('');
+                } else {
+                    $('#partial_result').html('<div class="alert alert-danger">' + (response.message || 'Hiba!') + '</div>');
+                }
+            },
+            error: function () {
+                $btn.prop('disabled', false).html('<i class="fas fa-calculator mr-1"></i> Összeg számítása');
+                alert('Hiba az összeg lekérdezésekor!');
+            }
+        });
+    });
+
+    // Részleges visszajáró számolás
+    $('#partial_cash_received').on('input', function () {
+        var amount = parseFloat($('#partial_checkout_amount').text().replace(/\s/g, '')) || 0;
+        var received = parseFloat($(this).val()) || 0;
+        var change = Math.max(0, received - amount);
+        $('#partial_change_amount').text(numberFormat(change));
+    });
+
+    // Részleges fizetési mód váltás
+    $('input[name="partial_payment_method"]').on('change', function () {
+        if ($(this).val() === 'card') {
+            $('#partial_cash_details').hide();
+        } else {
+            $('#partial_cash_details').show();
+        }
+    });
+
+    // Részleges fizetés beküldése
+    $('#partial_checkout_form').on('submit', function (e) {
+        e.preventDefault();
+
+        var leavingCount = $('#partial_leaving_count').val();
+        var paymentMethod = $('input[name="partial_payment_method"]:checked').val();
+        var cashReceived = $('#partial_cash_received').val();
+        var amount = parseFloat($('#partial_checkout_amount').text().replace(/\s/g, '')) || 0;
+
+        if (paymentMethod === 'cash' && (!cashReceived || parseFloat(cashReceived) < amount)) {
+            alert('A kapott összeg nem lehet kevesebb a fizetendőnél (' + numberFormat(amount) + ' Ft)!');
+            return;
+        }
+
+        var $btn = $('#partial_confirm_btn');
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Feldolgozás...');
 
         $.ajax({
@@ -291,30 +384,27 @@ $(document).ready(function () {
             method: 'POST',
             data: {
                 _token: csrfToken,
-                leaving_count: leavingCount
+                leaving_count: leavingCount,
+                payment_method: paymentMethod,
+                cash_received: cashReceived || null
             },
             success: function (response) {
                 if (response.success) {
-                    $('#partial_result').html(
-                        '<div class="alert alert-success">' +
-                        '<strong>Részleges kiléptetés rögzítve!</strong><br>' +
-                        'Fizetendő összeg: <strong>' + numberFormat(response.total_cost) + ' Ft</strong><br>' +
-                        'Bent maradó vendégek: <strong>' + response.remaining_guests + ' fő</strong>' +
-                        '</div>'
-                    );
-                    $btn.html('<i class="fas fa-check mr-1"></i> Részleges Kiléptetés');
-                    setTimeout(function () {
-                        $('#partialCheckoutModal').modal('hide');
-                        location.reload();
-                    }, 2000);
+                    $('#partialCheckoutModal').modal('hide');
+                    var msg = 'Részleges fizetés sikeres!';
+                    if (paymentMethod === 'cash') {
+                        msg += '\nVissza kell adni: ' + numberFormat(response.change || 0) + ' Ft';
+                    }
+                    alert(msg);
+                    location.reload();
                 } else {
-                    $('#partial_result').html('<div class="alert alert-danger">' + (response.message || 'Hiba történt!') + '</div>');
-                    $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Részleges Kiléptetés');
+                    $('#partial_result').html('<div class="alert alert-danger">' + (response.message || 'Hiba!') + '</div>');
+                    $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés');
                 }
             },
             error: function () {
-                $('#partial_result').html('<div class="alert alert-danger">Szerverhiba!</div>');
-                $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Részleges Kiléptetés');
+                alert('Szerverhiba a részleges fizetés során!');
+                $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés');
             }
         });
     });
@@ -323,22 +413,35 @@ $(document).ready(function () {
     // Eltelt idő frissítése (live)
     // -------------------------------------------------------
     function updateElapsedTimes() {
+        if (timerPaused) return;
+
         $('.elapsed-time').each(function () {
             var startStr = $(this).data('start');
             if (!startStr) return;
             var start = new Date(startStr);
             var now = new Date();
             var diffMs = now - start;
-            var diffMins = Math.floor(diffMs / 60000);
+            var diffMins = Math.ceil(diffMs / 60000);
+            if (diffMins < 1) diffMins = 1;
+
             var hours = Math.floor(diffMins / 60);
             var mins = diffMins % 60;
             var text = hours > 0 ? (hours + ' óra ' + mins + ' perc') : (diffMins + ' perc');
             $(this).text(text);
+
+            // Várható díj frissítése
+            var $row = $(this).closest('tr');
+            var rate = parseFloat($row.data('rate'));
+            var guestCount = parseInt($row.find('.guest-count').text()) || 1;
+            if (rate && $row.find('.expected-fee').length) {
+                var fee = Math.round((diffMins / 60) * rate * guestCount);
+                $row.find('.expected-fee').text(numberFormat(fee) + ' Ft');
+            }
         });
     }
 
     updateElapsedTimes();
-    setInterval(updateElapsedTimes, 30000);
+    setInterval(updateElapsedTimes, 10000); // 10 másodpercenként frissítünk a jobb élményért
 
     // -------------------------------------------------------
     // Segédfüggvények
