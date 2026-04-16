@@ -25,7 +25,8 @@ class ProfileController extends SiteExtendedController
         // Aktuális belépések és foglalások
         $activeEntries = $user ? $user->entries()->whereNull('end_time')->get() : collect();
         $upcomingBookings = $user ? $user->bookings()->where('booking_date', '>=', now()->toDateString())->orderBy('booking_date')->orderBy('booking_time')->get() : collect();
+        $allBookings = $user ? $user->bookings()->orderByDesc('booking_date')->orderByDesc('booking_time')->get() : collect();
 
-        return view('flip-city::site.flip-city.profile', compact('user', 'qrCode', 'activeEntries', 'upcomingBookings'));
+        return view('flip-city::site.flip-city.profile', compact('user', 'qrCode', 'activeEntries', 'upcomingBookings', 'allBookings'));
     }
 }

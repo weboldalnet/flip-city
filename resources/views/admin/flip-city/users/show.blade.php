@@ -81,8 +81,16 @@
                             @endif
                         </dd>
 
-                        <dt class="col-5 text-muted small">Számlázási adat</dt>
-                        <dd class="col-7 small">{{ $user->billing_details ?? '–' }}</dd>
+                        <dt class="col-5 text-muted small">Számlázási cím</dt>
+                        <dd class="col-7 small">
+                            {{ $user->billing_zip }} {{ $user->billing_city }},<br>
+                            {{ $user->billing_address }}
+                        </dd>
+
+                        @if($user->billing_details)
+                            <dt class="col-5 text-muted small">Számlázási megj.</dt>
+                            <dd class="col-7 small">{{ $user->billing_details }}</dd>
+                        @endif
 
                         <dt class="col-5 text-muted small">QR Token</dt>
                         <dd class="col-7">
@@ -213,9 +221,10 @@
                                 <tr>
                                     <th>Dátum</th>
                                     <th>Időpont</th>
-                                    <th class="text-center">Vendégek</th>
+                                    <th>Vendégek</th>
                                     <th>QR Token</th>
                                     <th>Státusz</th>
+                                    <th>Megjegyzés</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -234,10 +243,11 @@
                                             {{ $statusLabels[$booking->status] ?? $booking->status }}
                                         </span>
                                     </td>
+                                    <td class="small">{{ $booking->comments ?? '-' }}</td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-3">Nincs foglalás.</td>
+                                    <td colspan="6" class="text-center text-muted py-3">Nincs foglalás.</td>
                                 </tr>
                                 @endforelse
                             </tbody>

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Weboldalnet\FlipCity\Mail\FlipCityMail;
+use Weboldalnet\FlipCity\Models\Booking;
 use Weboldalnet\FlipCity\Models\DailySummary;
 use Weboldalnet\FlipCity\Models\Entry;
 use Weboldalnet\FlipCity\Models\Invoice;
@@ -20,7 +21,19 @@ class DashboardController extends FlipCityAdminController
         $activeEntries = Entry::with('user')->whereNull('end_time')->get();
         $todaySummary = DailySummary::where('summary_date', date('Y-m-d'))->first();
 
-        return view('flip-city::admin.flip-city.dashboard', compact('activeEntries', 'todaySummary'));
+        $todayBookings = Booking::with('user')
+            ->where('booking_date', date('Y-m-d'))
+            ->where('status', 'pending')
+            ->orderBy('booking_time', 'asc')
+            ->get();
+
+        $futureBookings = Booking::with('user')
+            ->where('booking_date', '>', date('Y-m-d'))
+            ->orderBy('booking_date', 'asc')
+            ->orderBy('booking_time', 'asc')
+            ->get();
+
+        return view('flip-city::admin.flip-city.dashboard', compact('activeEntries', 'todaySummary', 'todayBookings', 'futureBookings'));
     }
 
     public function closeDay()
@@ -46,6 +59,9 @@ class DashboardController extends FlipCityAdminController
             'name'  => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:flip_city_users',
             'phone' => 'nullable|string|max:50',
+            'billing_zip' => 'required|string|max:10',
+            'billing_city' => 'required|string|max:255',
+            'billing_address' => 'required|string|max:255',
         ]);
 
         $qrToken = Str::uuid()->toString();
@@ -55,6 +71,9 @@ class DashboardController extends FlipCityAdminController
             'name'           => $validated['name'],
             'email'          => $validated['email'] ?? null,
             'phone'          => $validated['phone'] ?? null,
+            'billing_zip'    => $validated['billing_zip'],
+            'billing_city'   => $validated['billing_city'],
+            'billing_address' => $validated['billing_address'],
             'qr_code_token'  => $qrToken,
             'qr_code_svg'    => $qrSvg,
             'is_active'      => true,

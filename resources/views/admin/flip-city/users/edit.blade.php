@@ -74,11 +74,47 @@
                             </div>
                         </div>
 
+                        <hr>
+                        <h6 class="font-weight-bold mb-3">Számlázási adatok</h6>
+
                         <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Számlázási adatok</label>
+                            <label class="col-sm-3 col-form-label">Irányítószám <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="text" name="billing_zip" class="form-control @error('billing_zip') is-invalid @enderror"
+                                       value="{{ old('billing_zip', $user->billing_zip) }}" required>
+                                @error('billing_zip')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Város <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="text" name="billing_city" class="form-control @error('billing_city') is-invalid @enderror"
+                                       value="{{ old('billing_city', $user->billing_city) }}" required>
+                                @error('billing_city')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Cím <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                <input type="text" name="billing_address" class="form-control @error('billing_address') is-invalid @enderror"
+                                       value="{{ old('billing_address', $user->billing_address) }}" required>
+                                @error('billing_address')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Megjegyzés</label>
                             <div class="col-sm-9">
                                 <textarea name="billing_details" class="form-control @error('billing_details') is-invalid @enderror"
-                                          rows="3">{{ old('billing_details', $user->billing_details) }}</textarea>
+                                          rows="2">{{ old('billing_details', $user->billing_details) }}</textarea>
                                 @error('billing_details')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

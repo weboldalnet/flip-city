@@ -92,7 +92,7 @@ class EntryController extends FlipCityAdminController
         // Foglalás frissítése ha van
         $user->bookings()
             ->where('booking_date', now()->toDateString())
-            ->where('status', '!=', 'completed')
+            ->where('status', 'pending')
             ->update(['status' => 'confirmed']);
 
         return redirect()->route('flip-city.admin.dashboard')->with('success', 'Sikeres manuális beléptetés.');
@@ -117,7 +117,7 @@ class EntryController extends FlipCityAdminController
         // Ha volt mai foglalása, jelöljük lezártnak (vagy igény szerint)
         $user->bookings()
             ->where('booking_date', now()->toDateString())
-            ->where('status', '!=', 'completed')
+            ->where('status', 'pending')
             ->update(['status' => 'confirmed']);
 
         return response()->json([

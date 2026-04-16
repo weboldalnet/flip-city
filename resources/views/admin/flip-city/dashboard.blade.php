@@ -159,6 +159,39 @@
             </div>
         </div>
     </div>
+
+    @include('flip-city::admin.flip-city.dashboard._today_bookings')
+
+    @include('flip-city::admin.flip-city.dashboard._future_bookings')
+</div>
+
+<!-- Checkin Manual Modal -->
+<div class="modal fade" id="checkinManualModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Beléptetés</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST">
+                @csrf
+                <input type="hidden" name="user_id" id="checkin_user_id">
+                <div class="modal-body">
+                    <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
+                    <div class="form-group">
+                        <label>Létszám (fő) <span class="text-danger">*</span></label>
+                        <input type="number" name="guest_count" id="checkin_guest_count" class="form-control" value="1" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-play mr-1"></i> Beléptetés
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Add User Modal -->
@@ -184,6 +217,22 @@
                     <div class="form-group">
                         <label>Telefonszám</label>
                         <input type="text" name="phone" class="form-control" placeholder="+36 30 ...">
+                    </div>
+                    <hr>
+                    <h6 class="font-weight-bold">Számlázási adatok</h6>
+                    <div class="form-group row">
+                        <div class="col-sm-4">
+                            <label>Irányítószám</label>
+                            <input type="text" name="billing_zip" class="form-control" required placeholder="1234">
+                        </div>
+                        <div class="col-sm-8">
+                            <label>Város</label>
+                            <input type="text" name="billing_city" class="form-control" required placeholder="Budapest">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cím (utca, házszám)</label>
+                        <input type="text" name="billing_address" class="form-control" required placeholder="Példa utca 1.">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -363,6 +412,21 @@
 @push('scripts')
     <script src="/plugins/qrcode-scanner/html5-qrcode.min.js"></script>
     <script src="{{ asset('packages/flip-city/js/admin/flip-city.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Manuális beléptetés gomb kezelése (a listákból)
+            $(document).on('click', '.checkin-manual-btn', function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                var guests = $(this).data('guests') || 1;
+                
+                $('#checkin_user_id').val(id);
+                $('#checkin_user_name').text(name);
+                $('#checkin_guest_count').val(guests);
+                $('#checkinManualModal').modal('show');
+            });
+        });
+    </script>
 @endpush
 {{--<script src="/js/qr-code-scanner.js"></script>--}}
 <link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">

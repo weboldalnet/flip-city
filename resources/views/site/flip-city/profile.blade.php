@@ -13,46 +13,17 @@
                     </div>
                     <p class="text-muted small">Ezzel a kóddal tudsz belépni a trambulin parkba.</p>
                     <button class="btn btn-sm btn-outline-primary" onclick="window.print()"><i class="fas fa-print mr-1"></i> Nyomtatás</button>
+                    <hr>
+                    <button class="btn btn-primary btn-block" data-toggle="modal" data-target="#profileDataModal">
+                        <i class="fas fa-user mr-1"></i> Profil adatok
+                    </button>
+                    <button class="btn btn-info btn-block" data-toggle="modal" data-target="#allBookingsModal">
+                        <i class="fas fa-list mr-1"></i> Összes foglalás
+                    </button>
                 </div>
             </div>
         </div>
         <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Profil adatok</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-sm-4 font-weight-bold">Név:</div>
-                        <div class="col-sm-8">{{ $user->name }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 font-weight-bold">E-mail:</div>
-                        <div class="col-sm-8">{{ $user->email }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 font-weight-bold">Telefonszám:</div>
-                        <div class="col-sm-8">{{ $user->phone ?? '-' }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 font-weight-bold">Egyenleg:</div>
-                        <div class="col-sm-8 text-success font-weight-bold">{{ number_format($user->balance, 0, ',', ' ') }} Ft</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 font-weight-bold">Státusz:</div>
-                        <div class="col-sm-8">
-                            @if($user->is_blocked)
-                                <span class="badge badge-danger">Tiltva</span>
-                            @elseif($user->is_active)
-                                <span class="badge badge-success">Aktív</span>
-                            @else
-                                <span class="badge badge-warning">Inaktív</span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             @if($activeEntries->isNotEmpty())
             <div class="card shadow mt-4 border-warning">
                 <div class="card-header bg-warning text-dark">
@@ -128,7 +99,7 @@
 
             <div class="card shadow mt-4">
                 <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">Szülinap Foglalás</h5>
+                    <h5 class="mb-0">Foglalás</h5>
                 </div>
                 <div class="card-body">
                     <form action="{{ route('flip-city.booking.store') }}" method="POST">
@@ -148,8 +119,14 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label>Gyermekek száma</label>
+                                    <label>Létszám</label>
                                     <input type="number" name="guest_count" class="form-control" required min="1">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label>Megjegyzés (opcionális)</label>
+                                    <textarea name="comments" class="form-control" rows="2"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -160,4 +137,107 @@
         </div>
     </div>
 </div>
+
+<!-- Profil adatok Modal -->
+<div class="modal fade" id="profileDataModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Profil adatok</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4 font-weight-bold">Név:</div>
+                    <div class="col-sm-8">{{ $user->name }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 font-weight-bold">E-mail:</div>
+                    <div class="col-sm-8">{{ $user->email }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 font-weight-bold">Telefonszám:</div>
+                    <div class="col-sm-8">{{ $user->phone ?? '-' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 font-weight-bold">Számlázási név:</div>
+                    <div class="col-sm-8">{{ $user->name }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 font-weight-bold">Számlázási cím:</div>
+                    <div class="col-sm-8">{{ $user->billing_zip }} {{ $user->billing_city }}, {{ $user->billing_address }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 font-weight-bold">Státusz:</div>
+                    <div class="col-sm-8">
+                        @if($user->is_blocked)
+                            <span class="badge badge-danger">Tiltva</span>
+                        @elseif($user->is_active)
+                            <span class="badge badge-success">Aktív</span>
+                        @else
+                            <span class="badge badge-warning">Inaktív</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Bezárás</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Összes foglalás Modal -->
+<div class="modal fade" id="allBookingsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Összes foglalás</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Dátum</th>
+                                <th>Időpont</th>
+                                <th>Létszám</th>
+                                <th>Státusz</th>
+                                <th>Megjegyzés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($allBookings as $booking)
+                            <tr>
+                                <td>{{ $booking->booking_date }}</td>
+                                <td>{{ date('H:i', strtotime($booking->booking_time)) }}</td>
+                                <td>{{ $booking->guest_count }} fő</td>
+                                <td>
+                                    <span class="badge badge-{{ $booking->status === 'confirmed' ? 'success' : 'secondary' }}">
+                                        {{ $booking->status }}
+                                    </span>
+                                </td>
+                                <td><small>{{ $booking->comments ?? '-' }}</small></td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-4">Még nincsenek foglalásaid.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Bezárás</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection

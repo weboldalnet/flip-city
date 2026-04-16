@@ -42,6 +42,41 @@
                             </div>
                         </div>
 
+                        <hr>
+                        <h5 class="text-center mb-4">Számlázási adatok</h5>
+
+                        <div class="form-group row">
+                            <label for="billing_zip" class="col-md-4 col-form-label text-md-right">Irányítószám</label>
+                            <div class="col-md-6">
+                                <input id="billing_zip" type="text" class="form-control @error('billing_zip') is-invalid @enderror" name="billing_zip" value="{{ old('billing_zip') }}" required>
+                                @error('billing_zip')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="billing_city" class="col-md-4 col-form-label text-md-right">Város</label>
+                            <div class="col-md-6">
+                                <input id="billing_city" type="text" class="form-control @error('billing_city') is-invalid @enderror" name="billing_city" value="{{ old('billing_city') }}" required>
+                                @error('billing_city')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="billing_address" class="col-md-4 col-form-label text-md-right">Cím (utca, házszám)</label>
+                            <div class="col-md-6">
+                                <input id="billing_address" type="text" class="form-control @error('billing_address') is-invalid @enderror" name="billing_address" value="{{ old('billing_address') }}" required>
+                                @error('billing_address')
+                                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <hr>
+
                         <div class="form-group row">
                             <label for="password" class="col-md-4 col-form-label text-md-right">Jelszó</label>
                             <div class="col-md-6">

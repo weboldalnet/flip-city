@@ -17,6 +17,9 @@ return new class extends Migration
                 email VARCHAR(255) UNIQUE,
                 phone VARCHAR(50),
                 password VARCHAR(255),
+                billing_zip VARCHAR(10),
+                billing_city VARCHAR(255),
+                billing_address VARCHAR(255),
                 billing_details TEXT,
                 terms_accepted BOOLEAN NOT NULL DEFAULT FALSE,
                 qr_code_token VARCHAR(255) UNIQUE,
@@ -57,6 +60,7 @@ return new class extends Migration
                 guest_count INTEGER NOT NULL,
                 qr_code_token VARCHAR(255) UNIQUE,
                 status VARCHAR(50) DEFAULT 'pending',
+                comments TEXT,
                 created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );

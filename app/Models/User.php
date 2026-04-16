@@ -14,6 +14,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string $email
  * @property string|null $phone
  * @property string $password
+ * @property string|null $billing_zip
+ * @property string|null $billing_city
+ * @property string|null $billing_address
  * @property string|null $billing_details
  * @property bool $terms_accepted
  * @property string|null $qr_code_token
@@ -38,7 +41,7 @@ class User extends Authenticatable
     protected $table = 'flip_city_users';
 
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'billing_details',
+        'name', 'email', 'phone', 'password', 'billing_zip', 'billing_city', 'billing_address', 'billing_details',
         'terms_accepted', 'qr_code_token', 'qr_code_svg', 'activation_token', 'activated_at',
         'is_active', 'is_blocked', 'balance', 'card_registered'
     ];
