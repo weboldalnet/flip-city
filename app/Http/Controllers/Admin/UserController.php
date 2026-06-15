@@ -43,8 +43,9 @@ class UserController extends FlipCityAdminController
     {
         $entries = $user->entries()->orderBy('created_at', 'desc')->take(20)->get();
         $bookings = $user->bookings()->orderBy('created_at', 'desc')->take(10)->get();
+        $invoices = $user->invoices()->orderBy('created_at', 'desc')->get();
 
-        return view('flip-city::admin.flip-city.users.show', compact('user', 'entries', 'bookings'));
+        return view('flip-city::admin.flip-city.users.show', compact('user', 'entries', 'bookings', 'invoices'));
     }
 
     public function edit(User $user)

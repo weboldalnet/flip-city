@@ -1,5 +1,7 @@
 @extends("admin.layouts.layout")
 
+@section('title', 'Felhasználók - Flip-City')
+
 @section("content")
 <div class="container-fluid flip-city-admin">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -207,9 +209,19 @@
                 <input type="hidden" name="user_id" id="checkin_user_id">
                 <div class="modal-body">
                     <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
-                    <div class="form-group">
-                        <label>Létszám (fő) <span class="text-danger">*</span></label>
-                        <input type="number" name="guest_count" class="form-control" value="1" min="1" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fő (játszó) <span class="text-danger">*</span></label>
+                                <input type="number" name="guest_count" class="form-control" value="1" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Kis. (kísérő)</label>
+                                <input type="number" name="companions_count" class="form-control" value="0" min="0">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -231,6 +243,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         $('#checkin_user_id').val(id);
         $('#checkin_user_name').text(name);
+        $('#checkin_guest_count').val(1);
+        $('#checkin_companions_count').val(0);
         $('#checkinManualModal').modal('show');
     });
 });

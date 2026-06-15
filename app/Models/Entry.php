@@ -28,7 +28,7 @@ class Entry extends Model
 
     protected $fillable = [
         'user_id', 'start_time', 'end_time', 'rate',
-        'guest_count', 'is_auto_closed', 'total_cost'
+        'guest_count', 'companions_count', 'is_auto_closed', 'total_cost'
     ];
 
     protected $casts = [

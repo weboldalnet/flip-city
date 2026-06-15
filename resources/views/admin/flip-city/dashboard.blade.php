@@ -4,15 +4,20 @@
 
 @section("content")
     
-<div class="container-fluid flip-city-admin">
+<div class="container-fluid flip-city-admin" data-companion-price="{{ $flipCitySettings['companion_price'] }}">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Flip-City Dashboard</h1>
-        <div>
+        <div id="dashboard_data" data-companion-price="{{ $flipCitySettings['companion_price'] }}">
             <a href="{{ route('flip-city.admin.users.index') }}" class="btn btn-sm btn-outline-primary shadow-sm mr-1">
                 <i class="fas fa-users fa-sm mr-1"></i> Felhasználók
             </a>
+            @if(config('flip-city.billing_enabled', true))
             <a href="{{ route('flip-city.admin.invoices') }}" class="btn btn-sm btn-outline-secondary shadow-sm mr-1">
                 <i class="fas fa-file-invoice fa-sm mr-1"></i> Számlák
+            </a>
+            @endif
+            <a href="{{ route('flip-city.admin.settings') }}" class="btn btn-sm btn-outline-info shadow-sm mr-1">
+                <i class="fas fa-cogs fa-sm mr-1"></i> Beállítások
             </a>
             <button class="btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#addUserModal">
                 <i class="fas fa-user-plus fa-sm text-white-50 mr-1"></i> Új Ügyfél
@@ -51,6 +56,7 @@
                                     <th>Belépés</th>
                                     <th>Eltelt idő</th>
                                     <th class="text-center">Fő</th>
+                                    <th class="text-center">Kis.</th>
                                     <th class="text-center">Várható díj</th>
                                     <th class="text-center">Művelet</th>
                                 </tr>
@@ -69,8 +75,9 @@
                                         {{ $durationMinutes }} perc
                                     </td>
                                     <td class="text-center guest-count">{{ $entry->guest_count }}</td>
+                                    <td class="text-center companions-count">{{ $entry->companions_count }}</td>
                                     <td class="text-center text-warning font-weight-bold expected-fee">
-                                        {{ number_format(round(($durationMinutes / 60) * $entry->rate * $entry->guest_count), 0, ',', ' ') }} Ft
+                                        {{ number_format(round(($durationMinutes / 60) * $entry->rate * $entry->guest_count) + ($entry->companions_count * $flipCitySettings['companion_price']), 0, ',', ' ') }} Ft
                                     </td>
                                     <td class="text-center text-nowrap">
                                         <button class="btn btn-sm btn-danger checkout-btn"
@@ -90,7 +97,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">
+                                    <td colspan="7" class="text-center text-muted py-4">
                                         <i class="fas fa-door-open fa-2x mb-2 d-block"></i>
                                         Jelenleg nincs aktív vendég a rendszerben.
                                     </td>
@@ -136,6 +143,11 @@
                             </div>
                         </div>
                     </div>
+                    @if(config('flip-city.billing_enabled', true))
+                    <div class="alert alert-info small py-1 mt-3 mb-0">
+                        <i class="fas fa-info-circle mr-1"></i> A bevételek a számlázott tételekből származnak.
+                    </div>
+                    @endif
                     <hr>
                     <div class="h5 font-weight-bold text-dark mb-3">
                         Összesen:
@@ -173,14 +185,25 @@
                 <h5 class="modal-title">Beléptetés</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <form action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST">
+            <form id="checkin_manual_form" action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST">
                 @csrf
                 <input type="hidden" name="user_id" id="checkin_user_id">
+                <input type="hidden" name="booking_id" id="checkin_booking_id">
                 <div class="modal-body">
                     <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
-                    <div class="form-group">
-                        <label>Létszám (fő) <span class="text-danger">*</span></label>
-                        <input type="number" name="guest_count" id="checkin_guest_count" class="form-control" value="1" min="1" required>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fő (játszó) <span class="text-danger">*</span></label>
+                                <input type="number" name="guest_count" id="checkin_guest_count" class="form-control" value="1" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Kis. (kísérő)</label>
+                                <input type="number" name="companions_count" id="checkin_companions_count" class="form-control" value="0" min="0">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -219,19 +242,19 @@
                         <input type="text" name="phone" class="form-control" placeholder="+36 30 ...">
                     </div>
                     <hr>
-                    <h6 class="font-weight-bold">Számlázási adatok</h6>
+                    <h6 class="font-weight-bold">Számlázási adatok <span class="text-danger">*</span></h6>
                     <div class="form-group row">
                         <div class="col-sm-4">
-                            <label>Irányítószám</label>
+                            <label>Irányítószám <span class="text-danger">*</span></label>
                             <input type="text" name="billing_zip" class="form-control" required placeholder="1234">
                         </div>
                         <div class="col-sm-8">
-                            <label>Város</label>
+                            <label>Város <span class="text-danger">*</span></label>
                             <input type="text" name="billing_city" class="form-control" required placeholder="Budapest">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Cím (utca, házszám)</label>
+                        <label>Cím (utca, házszám) <span class="text-danger">*</span></label>
                         <input type="text" name="billing_address" class="form-control" required placeholder="Példa utca 1.">
                     </div>
                 </div>
@@ -270,8 +293,16 @@
                     <small class="form-text text-muted">Nyomja meg Entert vagy kattintson a gombra a feldolgozáshoz.</small>
                 </div>
                 <div id="qr_guest_count_wrap" class="form-group d-none">
-                    <label for="qr_guest_count">Vendégek száma</label>
-                    <input type="number" id="qr_guest_count" class="form-control" value="1" min="1" max="50">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="qr_guest_count">Fő (játszó) <span class="text-danger">*</span></label>
+                            <input type="number" id="qr_guest_count" class="form-control" value="1" min="1" max="50" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="qr_companions_count">Kis. (kísérő)</label>
+                            <input type="number" id="qr_companions_count" class="form-control" value="0" min="0" max="50">
+                        </div>
+                    </div>
                 </div>
                 <div id="qr_result" class="mt-3"></div>
             </div>
@@ -295,6 +326,18 @@
                 <input type="hidden" name="entry_id" id="checkout_entry_id">
                 <input type="hidden" name="payment_method" id="payment_method_hidden" value="cash">
                 <div class="modal-body">
+                    <div id="checkout_details_breakdown" class="mb-3" style="display: none;">
+                        <div class="d-flex justify-content-between text-muted small mb-1">
+                            <span>Alapdíj (<span id="checkout_breakdown_guests">0</span> fő):</span>
+                            <span><span id="checkout_breakdown_base">0</span> Ft</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small mb-1" id="checkout_breakdown_companions_row">
+                            <span>Kísérő díj (<span id="checkout_breakdown_companions_count">0</span> fő):</span>
+                            <span><span id="checkout_breakdown_companions">0</span> Ft</span>
+                        </div>
+                        <hr class="my-2">
+                    </div>
+
                     <div class="alert alert-info mb-4">
                         <div class="h4 mb-1">Fizetendő összeg:</div>
                         <div class="display-4 font-weight-bold text-danger">
@@ -419,10 +462,20 @@
                 var id = $(this).data('id');
                 var name = $(this).data('name');
                 var guests = $(this).data('guests') || 1;
+                var bookingId = $(this).data('booking-id') || '';
                 
                 $('#checkin_user_id').val(id);
                 $('#checkin_user_name').text(name);
                 $('#checkin_guest_count').val(guests);
+                $('#checkin_booking_id').val(bookingId);
+                $('#checkin_companions_count').val(0);
+
+                if (bookingId) {
+                    $('#checkin_manual_form').attr('action', '{{ route("flip-city.admin.entries.store-from-booking") }}');
+                } else {
+                    $('#checkin_manual_form').attr('action', '{{ route("flip-city.admin.entries.store-manual") }}');
+                }
+
                 $('#checkinManualModal').modal('show');
             });
         });

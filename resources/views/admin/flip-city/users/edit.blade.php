@@ -1,5 +1,7 @@
 @extends("admin.layouts.layout")
 
+@section('title', 'Szerkesztés: ' . $user->name . ' - Flip-City')
+
 @section("content")
 <div class="container-fluid flip-city-admin">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">

@@ -106,9 +106,19 @@ $(document).ready(function () {
             '<div class="card-body">' +
             '<h6 class="card-title font-weight-bold text-primary mb-3"><i class="fas fa-user-check mr-2"></i>' + user.name + '</h6>' +
             (booking ? '<div class="alert alert-success small py-2 mb-3"><i class="fas fa-calendar-check mr-1"></i>Találtunk mai foglalást (' + booking.guest_count + ' fő)!</div>' : '') +
+            '<div class="row">' +
+            '<div class="col-md-6">' +
             '<div class="form-group mb-3">' +
-            '<label class="small font-weight-bold">Vendégek száma:</label>' +
+            '<label class="small font-weight-bold">Fő (játszó):</label>' +
             '<input type="number" id="final_guest_count" class="form-control" value="' + guestCount + '" min="1" max="50">' +
+            '</div>' +
+            '</div>' +
+            '<div class="col-md-6">' +
+            '<div class="form-group mb-3">' +
+            '<label class="small font-weight-bold">Kis. (kísérő):</label>' +
+            '<input type="number" id="final_companions_count" class="form-control" value="0" min="0" max="50">' +
+            '</div>' +
+            '</div>' +
             '</div>' +
             '<button type="button" id="confirm_checkin_btn" class="btn btn-primary btn-block" data-token="' + user.qr_code_token + '">' +
             '<i class="fas fa-sign-in-alt mr-1"></i> Beléptetés indítása' +
@@ -121,8 +131,11 @@ $(document).ready(function () {
         $('#confirm_checkin_btn').on('click', function () {
             var token = $(this).data('token');
             var count = $('#final_guest_count').val();
+            var companions = $('#final_companions_count').val();
 
             $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> Beléptetés...');
+            
+            var companionsVal = $('#final_companions_count').val() || 0;
 
             $.ajax({
                 url: '/flip-city/entries',
@@ -130,7 +143,8 @@ $(document).ready(function () {
                 data: {
                     _token: csrfToken,
                     qr_code_token: token,
-                    guest_count: count
+                    guest_count: count,
+                    companions_count: companionsVal
                 },
                 success: function (res) {
                     if (res.success) {
@@ -192,6 +206,19 @@ $(document).ready(function () {
                     var amount = response.total_cost;
                     var duration = response.duration;
                     var guests = response.guest_count;
+
+                    // Breakdown adatok
+                    var compCount = parseInt(response.companions_count) || 0;
+                    if (compCount > 0) {
+                        $('#checkout_details_breakdown').show();
+                        $('#checkout_breakdown_guests').text(guests);
+                        $('#checkout_breakdown_base').text(numberFormat(response.base_cost));
+                        $('#checkout_breakdown_companions_count').text(compCount);
+                        $('#checkout_breakdown_companions').text(numberFormat(response.companions_cost));
+                    } else {
+                        $('#checkout_details_breakdown').hide();
+                    }
+
                     $('#checkout_amount').text(numberFormat(amount));
                     $('#checkout_duration').text(duration + ' perc, ' + guests + ' fő');
                     $('#checkoutModal').modal('show');
@@ -433,8 +460,11 @@ $(document).ready(function () {
             var $row = $(this).closest('tr');
             var rate = parseFloat($row.data('rate'));
             var guestCount = parseInt($row.find('.guest-count').text()) || 1;
+            var companionsCount = parseInt($row.find('.companions-count').text()) || 0;
+            var companionPrice = parseFloat($('#dashboard_data').data('companion-price')) || 0;
+
             if (rate && $row.find('.expected-fee').length) {
-                var fee = Math.round((diffMins / 60) * rate * guestCount);
+                var fee = Math.round((diffMins / 60) * rate * guestCount) + (companionsCount * companionPrice);
                 $row.find('.expected-fee').text(numberFormat(fee) + ' Ft');
             }
         });

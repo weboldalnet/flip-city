@@ -25,7 +25,13 @@ Route::middleware('web')->group(function () {
 
             Route::middleware('auth')->group(function () {
                 Route::get('/flip-city/profile', 'ProfileController@index')->name('flip-city.profile');
+                if (config('flip-city.profile_qr_print_enabled', true)) {
+                    Route::get('/flip-city/profile/print-qr', 'ProfileController@printQR')->name('flip-city.profile.print-qr');
+                }
                 Route::post('/flip-city/booking', 'BookingController@store')->name('flip-city.booking.store');
+                if (config('flip-city.billing_enabled', true)) {
+                    Route::get('/flip-city/invoices/{invoice}/download', 'InvoiceController@download')->name('flip-city.invoices.download');
+                }
             });
         });
 
@@ -42,19 +48,27 @@ Route::middleware('web')->group(function () {
                 Route::post('/close-day', 'DashboardController@closeDay')->name('flip-city.admin.close-day');
                 Route::post('/add-user', 'DashboardController@addUser')->name('flip-city.admin.add-user');
 
-                // Belépések
-                Route::get('/entries', 'EntryController@index')->name('flip-city.admin.entries');
-                Route::post('/entries', 'EntryController@store')->name('flip-city.admin.entries.store');
-                Route::post('/entries/store-manual', 'EntryController@storeManual')->name('flip-city.admin.entries.store-manual');
-                Route::post('/entries/scan', 'EntryController@scan')->name('flip-city.admin.entries.scan');
-                Route::post('/entries/{entry}/checkout', 'EntryController@checkout')->name('flip-city.admin.entries.checkout');
-                Route::post('/entries/{entry}/finalize-checkout', 'EntryController@finalizeCheckout')->name('flip-city.admin.entries.finalize-checkout');
-                Route::post('/entries/{entry}/partial-checkout', 'EntryController@partialCheckout')->name('flip-city.admin.entries.partial-checkout');
+            // Belépések
+            Route::get('/entries', 'EntryController@index')->name('flip-city.admin.entries');
+            Route::post('/entries', 'EntryController@store')->name('flip-city.admin.entries.store');
+            Route::post('/entries/store-manual', 'EntryController@storeManual')->name('flip-city.admin.entries.store-manual');
+            Route::post('/entries/store-from-booking', 'EntryController@storeFromBooking')->name('flip-city.admin.entries.store-from-booking');
+            Route::post('/entries/scan', 'EntryController@scan')->name('flip-city.admin.entries.scan');
+            Route::post('/entries/{entry}/checkout', 'EntryController@checkout')->name('flip-city.admin.entries.checkout');
+            Route::post('/entries/{entry}/finalize-checkout', 'EntryController@finalizeCheckout')->name('flip-city.admin.entries.finalize-checkout');
+            Route::post('/entries/{entry}/partial-checkout', 'EntryController@partialCheckout')->name('flip-city.admin.entries.partial-checkout');
 
-                // Számlák
+            // Beállítások
+            Route::get('/settings', 'DashboardController@settings')->name('flip-city.admin.settings');
+            Route::post('/settings', 'DashboardController@updateSettings')->name('flip-city.admin.settings.update');
+
+            // Számlák
+            Route::post('/invoices', 'InvoiceController@store')->name('flip-city.admin.invoices.store');
+            if (config('flip-city.billing_enabled', true)) {
                 Route::get('/invoices', 'InvoiceController@index')->name('flip-city.admin.invoices');
-                Route::post('/invoices', 'InvoiceController@store')->name('flip-city.admin.invoices.store');
                 Route::get('/invoices/{invoice}/print', 'InvoiceController@print')->name('flip-city.admin.invoices.print');
+                Route::get('/invoices/{invoice}/download', 'InvoiceController@download')->name('flip-city.admin.invoices.download');
+            }
 
                 // Felhasználók
                 Route::get('/users', 'UserController@index')->name('flip-city.admin.users.index');

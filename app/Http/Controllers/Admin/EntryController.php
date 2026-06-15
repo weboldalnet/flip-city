@@ -5,6 +5,7 @@ namespace Weboldalnet\FlipCity\Http\Controllers\Admin;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Weboldalnet\FlipCity\Models\Entry;
+use Weboldalnet\FlipCity\Models\FlipCitySettings;
 use Weboldalnet\FlipCity\Models\User;
 
 class EntryController extends FlipCityAdminController
@@ -15,7 +16,45 @@ class EntryController extends FlipCityAdminController
             ->orderBy('created_at', 'desc')
             ->paginate(30);
 
-        return view('flip-city::admin.flip-city.entries.index', compact('entries'));
+        $flipCitySettings = [
+            'default_rate' => FlipCitySettings::get('default_rate', config('flip-city.default_rate')),
+            'companion_price' => FlipCitySettings::get('companion_price', config('flip-city.companion_price')),
+        ];
+
+        return view('flip-city::admin.flip-city.entries.index', compact('entries', 'flipCitySettings'));
+    }
+
+    public function storeFromBooking(Request $request)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:flip_city_bookings,id',
+            'guest_count' => 'required|integer|min:1',
+            'companions_count' => 'nullable|integer|min:0',
+        ]);
+
+        $booking = \Weboldalnet\FlipCity\Models\Booking::findOrFail($validated['booking_id']);
+        $user = $booking->user;
+
+        if (!$user->is_active || $user->is_blocked) {
+            return redirect()->back()->with('error', 'A felhasználó inaktív vagy le van tiltva.');
+        }
+
+        $activeEntry = Entry::where('user_id', $user->id)->whereNull('end_time')->first();
+        if ($activeEntry) {
+            return redirect()->route('flip-city.admin.dashboard')->with('error', 'A felhasználó már be van léptetve.');
+        }
+
+        Entry::create([
+            'user_id'    => $user->id,
+            'start_time' => now(),
+            'rate'       => FlipCitySettings::get('default_rate', config('flip-city.default_rate', 1500)),
+            'guest_count' => $validated['guest_count'],
+            'companions_count' => $validated['companions_count'] ?? 0,
+        ]);
+
+        $booking->update(['status' => 'confirmed']);
+
+        return redirect()->route('flip-city.admin.dashboard')->with('success', 'Sikeres beléptetés foglalásból.');
     }
 
     public function scan(Request $request)
@@ -69,6 +108,7 @@ class EntryController extends FlipCityAdminController
         $validated = $request->validate([
             'user_id' => 'required|exists:flip_city_users,id',
             'guest_count' => 'required|integer|min:1',
+            'companions_count' => 'nullable|integer|min:0',
         ]);
 
         $user = User::findOrFail($validated['user_id']);
@@ -85,8 +125,9 @@ class EntryController extends FlipCityAdminController
         Entry::create([
             'user_id'    => $user->id,
             'start_time' => now(),
-            'rate'       => config('flip-city.default_rate', 1500),
+            'rate'       => FlipCitySettings::get('default_rate', config('flip-city.default_rate', 1500)),
             'guest_count' => $validated['guest_count'],
+            'companions_count' => $validated['companions_count'] ?? 0,
         ]);
 
         // Foglalás frissítése ha van
@@ -103,6 +144,7 @@ class EntryController extends FlipCityAdminController
         $validated = $request->validate([
             'qr_code_token' => 'required|string',
             'guest_count' => 'required|integer|min:1',
+            'companions_count' => 'nullable|integer|min:0',
         ]);
 
         $user = User::where('qr_code_token', $validated['qr_code_token'])->firstOrFail();
@@ -110,8 +152,9 @@ class EntryController extends FlipCityAdminController
         $entry = Entry::create([
             'user_id'    => $user->id,
             'start_time' => now(),
-            'rate'       => config('flip-city.default_rate', 1500),
+            'rate'       => FlipCitySettings::get('default_rate', config('flip-city.default_rate', 1500)),
             'guest_count' => $validated['guest_count'],
+            'companions_count' => $validated['companions_count'] ?? 0,
         ]);
 
         // Ha volt mai foglalása, jelöljük lezártnak (vagy igény szerint)
@@ -132,21 +175,32 @@ class EntryController extends FlipCityAdminController
         $leavingCount = (int) $request->input('leaving_count', $entry->guest_count);
         $isPartial = $request->has('partial') && $request->input('partial') == true;
 
+        $companionPrice = (float) FlipCitySettings::get('companion_price', config('flip-city.companion_price', 500));
+        $companionsCount = ($isPartial) ? 0 : (int)$entry->companions_count;
+        $companionsCost = $companionsCount * $companionPrice;
+
         if ($entry->end_time && !$isPartial) {
-            $cost = $entry->total_cost;
+            $cost = (float)$entry->total_cost;
             $durationMinutes = $entry->start_time->diffInMinutes($entry->end_time);
+            if ($durationMinutes < 1) $durationMinutes = 1;
+            $baseCost = $cost - $companionsCost;
         } else {
             $diffInSeconds = $entry->start_time->diffInSeconds(now());
             $durationMinutes = ceil($diffInSeconds / 60);
             if ($durationMinutes < 1) $durationMinutes = 1;
-            $cost = round(($durationMinutes / 60) * $entry->rate * $leavingCount);
+            
+            $baseCost = round(($durationMinutes / 60) * $entry->rate * $leavingCount);
+            $cost = $baseCost + $companionsCost;
         }
 
         return response()->json([
             'success'    => true,
-            'total_cost' => $cost,
-            'duration'   => $durationMinutes,
-            'guest_count' => $leavingCount,
+            'total_cost' => (float)$cost,
+            'base_cost'  => (float)$baseCost,
+            'companions_cost' => (float)$companionsCost,
+            'companions_count' => (int)$companionsCount,
+            'duration'   => (int)$durationMinutes,
+            'guest_count' => (int)$leavingCount,
         ]);
     }
 
@@ -156,8 +210,11 @@ class EntryController extends FlipCityAdminController
         $diffInSeconds = $entry->start_time->diffInSeconds($entry->end_time);
         $durationMinutes = ceil($diffInSeconds / 60);
         if ($durationMinutes < 1) $durationMinutes = 1;
-        
-        $entry->total_cost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count);
+
+        $companionPrice = (float) FlipCitySettings::get('companion_price', config('flip-city.companion_price', 500));
+        $companionsCost = $entry->companions_count * $companionPrice;
+
+        $entry->total_cost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count) + $companionsCost;
         $entry->save();
 
         return response()->json([
@@ -184,7 +241,7 @@ class EntryController extends FlipCityAdminController
 
         $costPerPerson = ($durationMinutes / 60) * $entry->rate;
         $totalCostForLeaving = round($costPerPerson * $leavingCount);
-        
+
         $change = 0;
         if ($paymentMethod === 'cash') {
             if ($cashReceived < $totalCostForLeaving) {
@@ -195,6 +252,31 @@ class EntryController extends FlipCityAdminController
 
         $entry->guest_count -= $leavingCount;
         $entry->save();
+
+        // Számlázás integrálása részleges kiléptetésnél
+        if (config('flip-city.billing_enabled', true)) {
+            try {
+                $invoiceResponse = \Weboldalnet\FlipCity\Services\InvoiceService::createInvoiceForEntry($entry, $totalCostForLeaving);
+
+                if ($invoiceResponse && $invoiceResponse->isSuccess()) {
+                    $newInvoice = \Weboldalnet\FlipCity\Models\Invoice::create([
+                        'entry_id'       => $entry->id,
+                        'user_id'        => $entry->user_id,
+                        'amount'         => $totalCostForLeaving,
+                        'payment_method' => $paymentMethod,
+                        'cash_received'  => $cashReceived ?: null,
+                        'change_given'   => $change,
+                        'invoice_number' => $invoiceResponse->getDocumentNumber(),
+                        'invoice_url'    => '',
+                    ]);
+
+                    $newInvoice->invoice_url = route('flip-city.admin.invoices.download', $newInvoice->id);
+                    $newInvoice->save();
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Számlázási hiba részleges kiléptetéskor: ' . $e->getMessage());
+            }
+        }
 
         // Napi összesítő frissítése
         $summary = \Weboldalnet\FlipCity\Models\DailySummary::firstOrCreate(['summary_date' => date('Y-m-d')]);

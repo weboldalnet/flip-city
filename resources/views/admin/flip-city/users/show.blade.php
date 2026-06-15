@@ -1,5 +1,7 @@
 @extends("admin.layouts.layout")
 
+@section('title', $user->name . ' - Flip-City')
+
 @section("content")
 <div class="container-fluid flip-city-admin">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -255,6 +257,57 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Számlák -->
+            @if(config('flip-city.billing_enabled', true))
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-invoice mr-1"></i> Számlák
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Dátum</th>
+                                    <th>Számlaszám</th>
+                                    <th class="text-right">Összeg</th>
+                                    <th>Fiz. mód</th>
+                                    <th class="text-center">Link</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($invoices as $invoice)
+                                <tr>
+                                    <td class="small">{{ $invoice->created_at->format('Y.m.d H:i') }}</td>
+                                    <td class="small font-weight-bold">{{ $invoice->invoice_number }}</td>
+                                    <td class="text-right small">{{ number_format($invoice->amount, 0, ',', ' ') }} Ft</td>
+                                    <td>
+                                        <span class="badge badge-info">{{ $invoice->payment_method == 'cash' ? 'KP' : 'Kártya' }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if($invoice->invoice_url)
+                                            <a href="{{ $invoice->invoice_url }}" target="_blank" class="btn btn-xs btn-outline-primary">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                        @else
+                                            <span class="text-muted small">N/A</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">Nincs kiállított számla.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

@@ -25,7 +25,8 @@
                             <button class="btn btn-sm btn-success checkin-manual-btn" 
                                     data-id="{{ $booking->user_id }}" 
                                     data-name="{{ $booking->user->name }}"
-                                    data-guests="{{ $booking->guest_count }}">
+                                    data-guests="{{ $booking->guest_count }}"
+                                    data-booking-id="{{ $booking->id }}">
                                 <i class="fas fa-sign-in-alt"></i> Beléptetés
                             </button>
                         </td>
