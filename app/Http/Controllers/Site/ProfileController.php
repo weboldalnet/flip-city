@@ -32,6 +32,16 @@ class ProfileController extends SiteExtendedController
         return view('flip-city::site.flip-city.profile', compact('user', 'qrCode', 'activeEntries', 'upcomingBookings', 'allBookings', 'invoices'));
     }
 
+    public function entries()
+    {
+        $user = auth()->user();
+        if (!$user) abort(403);
+
+        $entries = $user->entries()->orderByDesc('start_time')->paginate(15);
+
+        return view('flip-city::site.flip-city.entries', compact('user', 'entries'));
+    }
+
     public function printQR()
     {
         $user = auth()->user();

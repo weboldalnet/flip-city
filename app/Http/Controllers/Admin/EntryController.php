@@ -295,4 +295,79 @@ class EntryController extends FlipCityAdminController
             'remaining_guests' => $entry->guest_count,
         ]);
     }
+
+    public function fail(Entry $entry)
+    {
+        if ($entry->end_time && !$entry->is_failed) {
+            return redirect()->back()->with('error', 'Ez a belépés már le van zárva.');
+        }
+
+        $entry->update([
+            'end_time' => $entry->end_time ?: now(),
+            'total_cost' => $entry->calculateCurrentCost(),
+            'is_failed' => true
+        ]);
+
+        return redirect()->back()->with('success', 'A belépés meghiúsulttá lett nyilvánítva.');
+    }
+
+    public function unfail(Entry $entry)
+    {
+        if (!$entry->is_failed) {
+            return redirect()->back()->with('error', 'Ez a belépés nem meghiúsult.');
+        }
+
+        // Fizetési adatok (alapértelmezett KP, mert admin felületen történik a visszaállítás)
+        $paymentMethod = 'cash';
+        $totalCost = $entry->total_cost ?: $entry->calculateCurrentCost();
+
+        // Számlázás integrálása
+        if (config('flip-city.billing_enabled', true)) {
+            try {
+                $invoiceResponse = \Weboldalnet\FlipCity\Services\InvoiceService::createInvoiceForEntry($entry, $totalCost);
+
+                if ($invoiceResponse && $invoiceResponse->isSuccess()) {
+                    $newInvoice = \Weboldalnet\FlipCity\Models\Invoice::create([
+                        'entry_id'       => $entry->id,
+                        'user_id'        => $entry->user_id,
+                        'amount'         => $totalCost,
+                        'payment_method' => $paymentMethod,
+                        'invoice_number' => $invoiceResponse->getDocumentNumber(),
+                        'invoice_url'    => '',
+                    ]);
+
+                    $newInvoice->invoice_url = route('flip-city.admin.invoices.download', $newInvoice->id);
+                    $newInvoice->save();
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Számlázási hiba meghiúsult belépés visszaállításakor: ' . $e->getMessage());
+            }
+        } else {
+            // Számlázás nélkül is rögzítjük a tranzakciót
+            \Weboldalnet\FlipCity\Models\Invoice::create([
+                'entry_id'       => $entry->id,
+                'user_id'        => $entry->user_id,
+                'amount'         => $totalCost,
+                'payment_method' => $paymentMethod,
+                'invoice_number' => 'N/A',
+                'invoice_url'    => '',
+            ]);
+        }
+
+        // Napi összesítő frissítése
+        $summary = \Weboldalnet\FlipCity\Models\DailySummary::firstOrCreate(['summary_date' => date('Y-m-d')]);
+        if ($paymentMethod === 'cash') {
+            $summary->total_cash += $totalCost;
+        } else {
+            $summary->total_card += $totalCost;
+        }
+        $summary->save();
+
+        $entry->update([
+            'is_failed' => false,
+            'total_cost' => $totalCost
+        ]);
+
+        return redirect()->back()->with('success', 'A belépés sikeresen visszaállítva és a kasszához adva.');
+    }
 }

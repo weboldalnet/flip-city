@@ -31,7 +31,7 @@
                     @endif
                 </div>
 
-                <div style="text-align: left; font-size: 15px; margin-top: 15px;">
+                <div style="text-align: center; font-size: 15px; margin-top: 15px;">
                     {!! $mailData['desc'] ?? '' !!}
                 </div>
             </div>

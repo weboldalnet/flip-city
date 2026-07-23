@@ -28,6 +28,16 @@
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
         </div>
     @endif
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    @endif
 
     <div class="card shadow mb-4">
         <div class="card-header py-3">
@@ -85,6 +95,10 @@
                             </td>
                             <td class="text-center">
                                 <span class="badge badge-secondary">{{ $user->entries_count }}</span>
+                                @php $failedCount = $user->entries->where('is_failed', true)->count(); @endphp
+                                @if($failedCount > 0)
+                                    <span class="badge badge-danger ml-1" title="Meghiúsult belépések száma">{{ $failedCount }}</span>
+                                @endif
                             </td>
                             <td>
                                 @if($user->is_blocked)
@@ -182,7 +196,23 @@
                     </div>
                     <div class="form-group">
                         <label>Telefonszám</label>
-                        <input type="text" name="phone" class="form-control">
+                        <input type="text" name="phone" class="form-control" placeholder="+36 30 ...">
+                    </div>
+                    <hr>
+                    <h6 class="font-weight-bold">Számlázási adatok <span class="text-danger">*</span></h6>
+                    <div class="form-group row">
+                        <div class="col-sm-4">
+                            <label>Irányítószám <span class="text-danger">*</span></label>
+                            <input type="text" name="billing_zip" class="form-control" required placeholder="1234">
+                        </div>
+                        <div class="col-sm-8">
+                            <label>Város <span class="text-danger">*</span></label>
+                            <input type="text" name="billing_city" class="form-control" required placeholder="Budapest">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cím (utca, házszám) <span class="text-danger">*</span></label>
+                        <input type="text" name="billing_address" class="form-control" required placeholder="Példa utca 1.">
                     </div>
                 </div>
                 <div class="modal-footer">

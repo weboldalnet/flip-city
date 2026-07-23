@@ -117,15 +117,26 @@ class UserController extends FlipCityAdminController
             return redirect()->back()->with('error', 'Ennek a felhasználónak nincs email címe.');
         }
 
+        $token = Str::random(64);
+        \Illuminate\Support\Facades\DB::table("password_reset_tokens")->updateOrInsert(
+            ["email" => $user->email],
+            [
+                "email" => $user->email,
+                "token" => $token,
+                "created_at" => now()
+            ]
+        );
+
         $mailData = [
-            'subject'     => 'Jelszó visszaállítás',
-            'success_res' => 'Jelszó visszaállítási kérelem',
-            'desc'        => 'Kérjük, állítsa be jelszavát az alábbi linken: <br><a href="' . url('/password/reset/' . Str::random(60)) . '">Jelszó beállítása</a>',
+            'subject'     => 'Jelszó beállítása',
+            'success_res' => 'Jelszó beállítási kérelem',
+            'desc'        => 'Kérjük, állítsa be jelszavát az alábbi linken: <br><br>' .
+                             '<a href="' . route('flip-city.password.setup', $token) . '" style="background: #007bff; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Jelszó beállítása</a>',
         ];
 
         Mail::to($user->email)->send(new FlipCityMail($user, $mailData));
 
-        return redirect()->back()->with('success', 'Jelszó visszaállítási email elküldve.');
+        return redirect()->back()->with('success', 'Jelszó beállító e-mail elküldve.');
     }
 
     public function generateQRCode(User $user)

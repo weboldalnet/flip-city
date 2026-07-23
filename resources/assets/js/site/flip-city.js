@@ -23,9 +23,14 @@ $(document).ready(function() {
             var guestCountText = $row.find('.guest-count').text();
             var guestCount = parseInt(guestCountText) || 1;
             
+            var companions = parseInt($row.data('companions')) || 0;
+            var companionPrice = parseFloat($row.data('companion-price')) || 0;
+            
             if (rate && $row.find('.expected-fee').length) {
-                var fee = Math.round((diffMins / 60) * rate * guestCount);
-                $row.find('.expected-fee').text(numberFormat(fee) + ' Ft');
+                var baseFee = Math.round((diffMins / 60) * rate * guestCount);
+                var companionsFee = companions * companionPrice;
+                var totalFee = baseFee + companionsFee;
+                $row.find('.expected-fee').text(numberFormat(totalFee) + ' Ft');
             }
         });
     }

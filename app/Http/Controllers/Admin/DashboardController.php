@@ -34,7 +34,15 @@ class DashboardController extends FlipCityAdminController
             ->orderBy('booking_time', 'asc')
             ->get();
 
-        return view('flip-city::admin.flip-city.dashboard', compact('activeEntries', 'todaySummary', 'todayBookings', 'futureBookings'));
+        $failedEntries = Entry::with('user')
+            ->where('is_failed', true)
+            ->whereHas('user', function($query) {
+                $query->where('is_blocked', false);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('flip-city::admin.flip-city.dashboard', compact('activeEntries', 'todaySummary', 'todayBookings', 'futureBookings', 'failedEntries'));
     }
 
     public function closeDay()
@@ -92,6 +100,7 @@ class DashboardController extends FlipCityAdminController
                 $user->update($updateData);
             }
 
+            // Ha van a kérésben visszairányítási URL szándék, vagy maradjunk a konzisztenciánál
             return redirect()->route('flip-city.admin.users.show', $user)
                 ->with('success', 'Meglévő ügyfél azonosítva és frissítve.');
         }
@@ -114,15 +123,26 @@ class DashboardController extends FlipCityAdminController
         ]);
 
         if ($user->email) {
+            $token = Str::random(64);
+            \Illuminate\Support\Facades\DB::table("password_reset_tokens")->updateOrInsert(
+                ["email" => $user->email],
+                [
+                    "email" => $user->email,
+                    "token" => $token,
+                    "created_at" => now()
+                ]
+            );
+
             $mailData = [
                 'subject'     => 'Regisztráció - Jelszó beállítása',
                 'success_res' => 'Sikeresen regisztráltunk a rendszerbe!',
-                'desc'        => 'Kérjük, állítsa be jelszavát az alábbi linken: <br><a href="' . url('/password/reset/' . Str::random(60)) . '">Jelszó beállítása</a>',
+                'desc'        => 'Kérjük, állítsa be jelszavát az alábbi linken: <br><br>' .
+                                 '<a href="' . route('flip-city.password.setup', $token) . '" style="background: #007bff; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Jelszó beállítása</a>',
             ];
             Mail::to($user->email)->send(new FlipCityMail($user, $mailData));
         }
 
-        return redirect()->route('flip-city.admin.users.index')
+        return redirect()->route('flip-city.admin.users.show', $user)
             ->with('success', 'Ügyfél sikeresen hozzáadva.');
     }
 

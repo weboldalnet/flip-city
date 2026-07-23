@@ -53,6 +53,23 @@ class PasswordResetController extends SiteExtendedController
         return view("flip-city::site.flip-city.reset-password", ["token" => $token]);
     }
 
+    public function showSetupForm($token)
+    {
+        $reset = DB::table("password_reset_tokens")
+            ->where("token", $token)
+            ->first();
+
+        if (!$reset) {
+            return redirect()->route("flip-city.login.show")->with("error", "Érvénytelen vagy lejárt jelszó beállító link.");
+        }
+
+        return view("flip-city::site.flip-city.reset-password", [
+            "token" => $token,
+            "email" => $reset->email,
+            "is_setup" => true
+        ]);
+    }
+
     public function reset(Request $request)
     {
         $request->validate([
@@ -78,7 +95,14 @@ class PasswordResetController extends SiteExtendedController
         $user = User::where("email", $request->email)->first();
         $user->password = Hash::make($request->password);
         $user->is_active = true;
-        $user->activated_at = (new \DateTimeImmutable())->format( "Y-m-d H:i:s");
+        $user->activated_at = now();
+
+        if (!$user->qr_code_token || !$user->qr_code_svg) {
+            $qrToken = $user->qr_code_token ?? Str::uuid()->toString();
+            $user->qr_code_token = $qrToken;
+            $user->qr_code_svg = \Weboldalnet\FlipCity\Services\QRCodeService::generateQRCode($qrToken);
+        }
+
         $user->save();
 
         DB::table("password_reset_tokens")->where("email", $request->email)->delete();

@@ -27,9 +27,9 @@
                         <button class="btn btn-primary btn-block" data-toggle="modal" data-target="#profileDataModal">
                             <i class="fas fa-user mr-1"></i> Profil adatok
                         </button>
-                        <button class="btn btn-info btn-block" data-toggle="modal" data-target="#allBookingsModal">
-                            <i class="fas fa-list mr-1"></i> Összes foglalás
-                        </button>
+                        <a href="{{ route('flip-city.entries.index') }}" class="btn btn-info btn-block">
+                            <i class="fas fa-list mr-1"></i> Összes belépés
+                        </a>
                         @if($flipCitySettings['billing_enabled'])
                         <button class="btn btn-success btn-block" data-toggle="modal" data-target="#invoicesModal">
                             <i class="fas fa-file-invoice mr-1"></i> Számláim
@@ -50,15 +50,17 @@
                                 <tr>
                                     <th>Kezdés</th>
                                     <th>Létszám</th>
+                                    <th>Kis.</th>
                                     <th>Eltelt idő</th>
                                     <th class="text-right">Várható díj</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($activeEntries as $entry)
-                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}">
+                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}" data-companions="{{ $entry->companions_count }}" data-companion-price="{{ $flipCitySettings['companion_price'] }}">
                                     <td>{{ $entry->start_time->format('H:i') }}</td>
                                     <td class="guest-count">{{ $entry->guest_count }} fő</td>
+                                    <td class="companions-count">{{ $entry->companions_count }} fő</td>
                                     <td class="elapsed-time" data-start="{{ $entry->start_time->toISOString() }}">
                                         @php
                                             $diffInSeconds = $entry->start_time->diffInSeconds(now());
@@ -68,7 +70,11 @@
                                         {{ $durationMinutes }} perc
                                     </td>
                                     <td class="text-right text-warning font-weight-bold expected-fee">
-                                        {{ number_format(round(($durationMinutes / 60) * $entry->rate * $entry->guest_count), 0, ',', ' ') }} Ft
+                                        @php
+                                            $baseCost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count);
+                                            $companionsCost = $entry->companions_count * $flipCitySettings['companion_price'];
+                                        @endphp
+                                        {{ number_format($baseCost + $companionsCost, 0, ',', ' ') }} Ft
                                     </td>
                                 </tr>
                                 @endforeach

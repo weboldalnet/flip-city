@@ -21,10 +21,12 @@ Route::middleware('web')->group(function () {
             Route::get('/flip-city/forgot-password', 'PasswordResetController@showForgotPasswordForm')->name('flip-city.password.request');
             Route::post('/flip-city/forgot-password', 'PasswordResetController@sendResetLinkEmail')->name('flip-city.password.email');
             Route::get('/flip-city/reset-password/{token}', 'PasswordResetController@showResetForm')->name('flip-city.password.reset');
+            Route::get('/flip-city/setup-password/{token}', 'PasswordResetController@showSetupForm')->name('flip-city.password.setup');
             Route::post('/flip-city/reset-password', 'PasswordResetController@reset')->name('flip-city.password.update');
 
             Route::middleware('auth')->group(function () {
                 Route::get('/flip-city/profile', 'ProfileController@index')->name('flip-city.profile');
+                Route::get('/flip-city/entries', 'ProfileController@entries')->name('flip-city.entries.index');
                 if (config('flip-city.profile_qr_print_enabled', true)) {
                     Route::get('/flip-city/profile/print-qr', 'ProfileController@printQR')->name('flip-city.profile.print-qr');
                 }
@@ -57,6 +59,8 @@ Route::middleware('web')->group(function () {
             Route::post('/entries/{entry}/checkout', 'EntryController@checkout')->name('flip-city.admin.entries.checkout');
             Route::post('/entries/{entry}/finalize-checkout', 'EntryController@finalizeCheckout')->name('flip-city.admin.entries.finalize-checkout');
             Route::post('/entries/{entry}/partial-checkout', 'EntryController@partialCheckout')->name('flip-city.admin.entries.partial-checkout');
+            Route::post('/entries/{entry}/fail', 'EntryController@fail')->name('flip-city.admin.entries.fail');
+            Route::post('/entries/{entry}/unfail', 'EntryController@unfail')->name('flip-city.admin.entries.unfail');
 
             // Beállítások
             Route::get('/settings', 'DashboardController@settings')->name('flip-city.admin.settings');

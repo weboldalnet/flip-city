@@ -9,6 +9,12 @@
             <i class="fas fa-user mr-2 text-primary"></i>{{ $user->name }}
         </h1>
         <div>
+            @php $activeEntry = \Weboldalnet\FlipCity\Models\Entry::where('user_id', $user->id)->whereNull('end_time')->first(); @endphp
+            @if(!$activeEntry && $user->is_active && !$user->is_blocked)
+                <button type="button" class="btn btn-sm btn-success shadow-sm mr-1" data-toggle="modal" data-target="#checkinManualModal">
+                    <i class="fas fa-sign-in-alt fa-sm mr-1"></i> Beléptetés
+                </button>
+            @endif
             <a href="{{ route('flip-city.admin.users.index') }}" class="btn btn-sm btn-secondary shadow-sm mr-1">
                 <i class="fas fa-arrow-left fa-sm mr-1"></i> Vissza
             </a>
@@ -183,8 +189,11 @@
                                             @if($entry->is_auto_closed)
                                                 <span class="badge badge-warning badge-sm ml-1" title="Automatikusan zárva">auto</span>
                                             @endif
+                                            @if($entry->is_failed)
+                                                <span class="badge badge-danger badge-sm ml-1">meghiúsult</span>
+                                            @endif
                                         @else
-                                            <span class="badge badge-success">Aktív</span>
+                                            <span class="badge badge-success fs-14 ">Aktív</span>
                                         @endif
                                     </td>
                                     <td class="text-center">{{ $entry->guest_count }}</td>
@@ -193,14 +202,31 @@
                                         @if($entry->total_cost !== null)
                                             {{ number_format($entry->total_cost, 0, ',', ' ') }} Ft
                                         @else
-                                            <span class="text-muted">–</span>
+                                            {{ number_format($entry->calculateCurrentCost(), 0, ',', ' ') }} Ft
                                         @endif
                                     </td>
-                                    <td></td>
+                                    <td>
+
+                                        @if(!$entry->end_time)
+                                        <form action="{{ route('flip-city.admin.entries.fail', $entry->id) }}" class="mb-0" method="POST" onsubmit="return confirm('Biztosan meghiúsulttá teszi ezt a belépést?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs btn-outline-danger" title="Meghiúsult belépés">
+                                                <i class="fas fa-times-circle"></i> Meghiúsult
+                                            </button>
+                                        </form>
+                                        @elseif($entry->is_failed)
+                                        <form action="{{ route('flip-city.admin.entries.unfail', $entry->id) }}" class="mb-0" method="POST" onsubmit="return confirm('Biztosan visszaállítja ezt a belépést?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-xs btn-outline-success" title="Visszaállítás">
+                                                <i class="fas fa-undo"></i> Visszaállít
+                                            </button>
+                                        </form>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-3">Nincs belépési előzmény.</td>
+                                    <td colspan="7" class="text-center text-muted py-3">Nincs belépési előzmény.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -340,3 +366,36 @@
 
 <link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
 @endsection
+
+<!-- Manuális beléptetés Modal -->
+<div class="modal fade" id="checkinManualModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manuális beléptetés: {{ $user->name }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST">
+                @csrf
+                <input type="hidden" name="user_id" value="{{ $user->id }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="guest_count_show">Vendégek száma (fő)</label>
+                        <input type="number" name="guest_count" id="guest_count_show" class="form-control" value="1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="companions_count_show">Kísérők száma (Kis.)</label>
+                        <input type="number" name="companions_count" id="companions_count_show" class="form-control" value="0" min="0">
+                        <small class="form-text text-muted">A kísérők után egyszeri díj kerül felszámításra.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
+                    <button type="submit" class="btn btn-success">Beléptetés indítása</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

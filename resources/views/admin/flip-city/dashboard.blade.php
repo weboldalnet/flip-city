@@ -37,6 +37,16 @@
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
         </div>
     @endif
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+    @endif
 
     <div class="row">
         <div class="col-xl-8 col-lg-7">
@@ -64,7 +74,11 @@
                             <tbody>
                                 @forelse($activeEntries as $entry)
                                 <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}">
-                                    <td class="font-weight-bold">{{ $entry->user->name ?? '–' }}</td>
+                                    <td class="font-weight-bold">
+                                        <a href="{{ route('flip-city.admin.users.show', $entry->user_id) }}">
+                                            {{ $entry->user->name ?? '–' }}
+                                        </a>
+                                    </td>
                                     <td>{{ $entry->start_time->format('H:i') }}</td>
                                     <td class="elapsed-time" data-start="{{ $entry->start_time->toISOString() }}">
                                         @php 
@@ -175,6 +189,8 @@
     @include('flip-city::admin.flip-city.dashboard._today_bookings')
 
     @include('flip-city::admin.flip-city.dashboard._future_bookings')
+
+    @include('flip-city::admin.flip-city.dashboard._failed_entries')
 </div>
 
 <!-- Checkin Manual Modal -->
