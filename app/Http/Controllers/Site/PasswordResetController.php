@@ -59,7 +59,7 @@ class PasswordResetController extends SiteExtendedController
             ->where("token", $token)
             ->first();
 
-        if (!$reset) {
+        if (!$reset || $this->isExpired($reset)) {
             return redirect()->route("flip-city.login.show")->with("error", "Érvénytelen vagy lejárt jelszó beállító link.");
         }
 
@@ -87,15 +87,17 @@ class PasswordResetController extends SiteExtendedController
             return back()->withErrors(["email" => "Érvénytelen token vagy e-mail cím."]);
         }
 
-        if (Carbon::parse($reset->created_at)->addMinutes(60)->isPast()) {
+        if ($this->isExpired($reset)) {
             DB::table("password_reset_tokens")->where("email", $request->email)->delete();
             return back()->withErrors(["email" => "A jelszó visszaállító link lejárt."]);
         }
 
         $user = User::where("email", $request->email)->first();
         $user->password = Hash::make($request->password);
-        $user->is_active = true;
-        $user->activated_at = now();
+        if (!$user->activated_at) {
+            $user->is_active = true;
+            $user->activated_at = now();
+        }
 
         if (!$user->qr_code_token || !$user->qr_code_svg) {
             $qrToken = $user->qr_code_token ?? Str::uuid()->toString();
@@ -107,6 +109,18 @@ class PasswordResetController extends SiteExtendedController
 
         DB::table("password_reset_tokens")->where("email", $request->email)->delete();
 
+        if (!$user->is_active) {
+            return redirect()->route("flip-city.login.show")->with("success", "A jelszava megváltozott, de a fiókja jelenleg nem aktív. Kérjük, keresse munkatársainkat.");
+        }
+
         return redirect()->route("flip-city.login.show")->with("success", "A jelszava sikeresen megváltozott! Most már bejelentkezhet.");
+    }
+
+    private function isExpired($reset): bool
+    {
+        $user = User::where("email", $reset->email)->first();
+        $minutes = $user && !$user->activated_at ? 60 * 24 * 7 : 60;
+
+        return Carbon::parse($reset->created_at)->addMinutes($minutes)->isPast();
     }
 }

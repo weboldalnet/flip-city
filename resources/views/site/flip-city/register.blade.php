@@ -5,7 +5,7 @@
 
 @section('extendCSS')
     @if($flipCitySettings['css_published'])
-        <link rel="stylesheet" href="{{ asset('packages/flip-city/css/site/flip-city.css') }}">
+        <link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/site/flip-city.css') }}">
     @endif
 @endsection
 
@@ -19,6 +19,7 @@
                         <h4 class="mb-0">Regisztráció - Flip-City</h4>
                     </div>
                     <div class="card-body">
+                        @include('flip-city::site.flip-city.partials.flash', ['withErrors' => false])
                         <form method="POST" action="{{ route('flip-city.register') }}">
                             @csrf
 
@@ -90,7 +91,8 @@
                             <div class="form-group row">
                                 <label for="password" class="col-md-4 col-form-label text-md-right">Jelszó</label>
                                 <div class="col-md-6">
-                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required>
+                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required minlength="8" aria-describedby="passwordHelp">
+                                    <small id="passwordHelp" class="form-text text-muted">Legalább 8 karakter.</small>
                                     @error('password')
                                         <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
                                     @enderror
@@ -135,7 +137,7 @@
 
 @section('script')
     @if($flipCitySettings['js_published'])
-        <script src="{{ asset('packages/flip-city/js/site/flip-city.js') }}"></script>
+        <script src="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/js/site/flip-city.js') }}"></script>
     @endif
 @endsection
 

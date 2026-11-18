@@ -22,12 +22,12 @@
                         <td class="align-middle">{{ $booking->guest_count }} fő</td>
                         <td class="align-middle small text-muted">{{ $booking->comments ?? '-' }}</td>
                         <td class="align-middle">
-                            <button class="btn btn-sm btn-success checkin-manual-btn" 
+                            <button class="fc-act fc-act-go checkin-manual-btn" 
                                     data-id="{{ $booking->user_id }}" 
                                     data-name="{{ $booking->user->name }}"
                                     data-guests="{{ $booking->guest_count }}"
                                     data-booking-id="{{ $booking->id }}">
-                                <i class="fas fa-sign-in-alt"></i> Beléptetés
+                                <i class="fas fa-sign-in-alt"></i><span>Beléptetés</span>
                             </button>
                         </td>
                     </tr>

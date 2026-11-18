@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    @if(session('success'))
+    @if(session('success') && !session('wn_toast'))
         <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
@@ -73,7 +73,7 @@
                             <td class="text-center">
                                 <a href="{{ route('flip-city.admin.invoices.print', $invoice->id) }}"
                                    target="_blank"
-                                   class="btn btn-xs btn-outline-secondary" title="Nyomtatás">
+                                   class="fc-act" title="Nyomtatás" aria-label="Nyomtatás">
                                     <i class="fas fa-print"></i>
                                 </a>
                             </td>
@@ -94,12 +94,12 @@
         <div class="card-footer">
             <div class="d-flex justify-content-between align-items-center">
                 <small class="text-muted">Összesen: {{ $invoices->total() }} számla</small>
-                {{ $invoices->links() }}
+                {{ $invoices->links('pagination::bootstrap-4') }}
             </div>
         </div>
         @endif
     </div>
 </div>
 
-<link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
+<link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/admin/flip-city.css') }}">
 @endsection

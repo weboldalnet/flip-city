@@ -11,7 +11,7 @@
         </a>
     </div>
 
-    @if(session('success'))
+    @if(session('success') && !session('wn_toast'))
         <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
@@ -32,6 +32,8 @@
                             <th>Belépés</th>
                             <th>Kilépés</th>
                             <th class="text-center">Fő</th>
+                            <th class="text-center">Gyerek</th>
+                            <th class="text-center">Kísérő</th>
                             <th class="text-center">Végösszeg</th>
                             <th class="text-center">Státusz</th>
                         </tr>
@@ -55,13 +57,15 @@
                                 @if($entry->end_time)
                                     {{ $entry->end_time->format('Y.m.d H:i') }}
                                     @if($entry->is_auto_closed)
-                                        <span class="badge badge-warning ml-1" title="Automatikusan lezárva">AUTO</span>
+                                        <span class="badge badge-warning ml-1" title="Automatikusan lezárva">automatikus</span>
                                     @endif
                                 @else
                                     <span class="badge badge-success">Aktív</span>
                                 @endif
                             </td>
-                            <td class="text-center">{{ $entry->guest_count }}</td>
+                            <td class="text-center">{{ $entry->guest_count - $entry->children_count }}</td>
+                            <td class="text-center">{{ $entry->children_count }}</td>
+                            <td class="text-center">{{ $entry->companions_count }}</td>
                             <td class="text-center font-weight-bold">
                                 @if($entry->total_cost !== null)
                                     {{ number_format($entry->total_cost, 0, ',', ' ') }} Ft
@@ -72,8 +76,10 @@
                             <td class="text-center">
                                 @if(!$entry->end_time)
                                     <span class="badge badge-success">Aktív</span>
+                                @elseif($entry->is_failed)
+                                    <span class="badge badge-danger">Meghiúsult</span>
                                 @elseif($entry->is_auto_closed)
-                                    <span class="badge badge-warning">Auto-lezárt</span>
+                                    <span class="badge badge-warning">Automatikusan lezárt</span>
                                 @else
                                     <span class="badge badge-secondary">Lezárt</span>
                                 @endif
@@ -81,7 +87,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="fas fa-history fa-2x mb-2 d-block"></i>
                                 Nincs rögzített belépés.
                             </td>
@@ -95,12 +101,12 @@
         <div class="card-footer">
             <div class="d-flex justify-content-between align-items-center">
                 <small class="text-muted">Összesen: {{ $entries->total() }} belépés</small>
-                {{ $entries->links() }}
+                {{ $entries->links('pagination::bootstrap-4') }}
             </div>
         </div>
         @endif
     </div>
 </div>
 
-<link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
+<link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/admin/flip-city.css') }}">
 @endsection

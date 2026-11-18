@@ -1,26 +1,816 @@
 .flip-city-admin {
-    .card {
-        margin-bottom: 1.5rem;
+    --fc-navy: var(--navy, #0f1b3d);
+    --fc-accent: var(--accent, #0ea5c4);
+    --fc-accent-soft: var(--accent-soft, #e6f7fb);
+    --fc-text: var(--text, #1e293b);
+    --fc-muted: var(--muted, #64748b);
+    --fc-border: var(--border, #e2e8f0);
+    --fc-surface: var(--surface, #ffffff);
+    --fc-surface-2: var(--surface-2, #f1f5f9);
+    --fc-good: var(--good, #16a34a);
+    --fc-good-soft: var(--good-soft, #dcfce7);
+    --fc-warn: var(--warn, #d97706);
+    --fc-warn-soft: var(--warn-soft, #fef3c7);
+    --fc-bad: var(--bad, #dc2626);
+    --fc-bad-soft: var(--bad-soft, #fee2e2);
+    --fc-radius: var(--radius, 12px);
+    --fc-radius-lg: var(--radius-lg, 16px);
+    --fc-shadow: var(--shadow, 0 4px 16px rgba(15, 27, 61, .06), 0 1px 3px rgba(15, 27, 61, .05));
+    --fc-display: var(--font-display, "Plus Jakarta Sans", "Inter", system-ui, sans-serif);
+    padding-top: 24px;
+    padding-bottom: 80px;
+    color: var(--fc-text);
+}
+
+.flip-city-admin > .d-sm-flex:first-child,
+.flip-city-admin .fc-page-head {
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    margin-bottom: 20px !important;
+    background: var(--fc-surface);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-lg);
+    box-shadow: var(--fc-shadow);
+}
+
+.flip-city-admin > .d-sm-flex:first-child h1,
+.flip-city-admin .fc-page-head h1 {
+    margin: 0;
+    font-family: var(--fc-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--fc-navy) !important;
+}
+
+.flip-city-admin > .d-sm-flex:first-child > div,
+.flip-city-admin > .d-sm-flex:first-child > a {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.flip-city-admin > .d-sm-flex:first-child .btn {
+    margin: 0 !important;
+}
+
+.flip-city-admin .card {
+    margin-bottom: 20px;
+    background: var(--fc-surface);
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius-lg);
+    box-shadow: var(--fc-shadow) !important;
+    overflow: hidden;
+}
+
+.flip-city-admin .card-header {
+    padding: 14px 18px !important;
+    background: var(--fc-surface);
+    border-bottom: 1px solid var(--fc-border);
+    gap: 8px;
+}
+
+.flip-city-admin .card-header h6,
+.flip-city-admin .card-header .h6 {
+    margin: 0;
+    font-family: var(--fc-display);
+    font-size: 15px;
+    font-weight: 700 !important;
+    color: var(--fc-navy) !important;
+}
+
+.flip-city-admin .card-header h6.text-danger {
+    color: var(--fc-bad) !important;
+}
+
+.flip-city-admin .card-header h6::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: var(--fc-accent);
+    vertical-align: 2px;
+}
+
+.flip-city-admin .card-header h6.text-danger::before {
+    background: var(--fc-bad);
+}
+
+.flip-city-admin .card-header h6:has(> i)::before,
+.flip-city-admin .card-header h6:has(> .fas)::before {
+    display: none;
+}
+
+.flip-city-admin .card-header h6 > i {
+    margin-right: 6px;
+    color: var(--fc-accent);
+}
+
+.flip-city-admin .card-header h6.text-danger > i {
+    color: var(--fc-bad);
+}
+
+.flip-city-admin .card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 18px;
+    background: var(--fc-surface);
+    border-top: 1px solid var(--fc-border);
+}
+
+.flip-city-admin .card-footer > *,
+.flip-city-admin .card-footer form .btn {
+    margin: 0 !important;
+}
+
+.flip-city-admin .card-footer form {
+    display: inline-flex;
+}
+
+.flip-city-admin .card-footer .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--fc-border) !important;
+    border-radius: 8px;
+    background: var(--fc-surface) !important;
+    color: #475569 !important;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: none !important;
+}
+
+.flip-city-admin .card-footer .btn i {
+    margin: 0 !important;
+}
+
+.flip-city-admin .card-footer .btn:hover {
+    border-color: #cbd5e1 !important;
+    background: var(--fc-surface-2) !important;
+    color: var(--fc-navy) !important;
+}
+
+.flip-city-admin .card-footer .btn-danger,
+.flip-city-admin .card-footer .btn-outline-danger {
+    color: var(--fc-bad) !important;
+}
+
+.flip-city-admin .card-footer .btn-danger:hover,
+.flip-city-admin .card-footer .btn-outline-danger:hover {
+    border-color: #fecaca !important;
+    background: var(--fc-bad-soft) !important;
+    color: #991b1b !important;
+}
+
+.flip-city-admin .card-footer .btn-success,
+.flip-city-admin .card-footer .btn-outline-success {
+    color: var(--fc-good) !important;
+}
+
+.flip-city-admin .card-footer .btn-success:hover,
+.flip-city-admin .card-footer .btn-outline-success:hover {
+    border-color: #bbf7d0 !important;
+    background: var(--fc-good-soft) !important;
+    color: #166534 !important;
+}
+
+.flip-city-admin .card-footer .btn:focus {
+    outline: none;
+}
+
+.flip-city-admin .card-footer .btn:focus-visible {
+    outline: 2px solid var(--fc-accent);
+    outline-offset: 2px;
+}
+
+.flip-city-admin .card.border-danger {
+    border-color: #fecaca;
+}
+
+.flip-city-admin .card-header.bg-danger {
+    background: var(--fc-bad-soft) !important;
+    border-bottom-color: #fecaca;
+}
+
+.flip-city-admin .card-header.bg-danger h6,
+.flip-city-admin .card-header.bg-danger h6 > i {
+    color: var(--fc-bad) !important;
+}
+
+.flip-city-admin .card-header.bg-danger h6::before {
+    background: var(--fc-bad);
+}
+
+.flip-city-admin .card-body {
+    padding: 18px;
+}
+
+.flip-city-admin .card-body.p-0 {
+    padding: 0;
+}
+
+.flip-city-admin .table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--fc-text);
+    font-size: 14px;
+}
+
+.flip-city-admin .table th,
+.flip-city-admin .table td {
+    text-align: left;
+}
+
+.flip-city-admin .table-bordered,
+.flip-city-admin .table-bordered th,
+.flip-city-admin .table-bordered td {
+    border-left: 0;
+    border-right: 0;
+}
+
+.flip-city-admin .table-bordered {
+    border: 0;
+}
+
+.flip-city-admin .table th,
+.flip-city-admin .table td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    border-color: var(--fc-border);
+}
+
+.flip-city-admin .table thead th {
+    background: var(--fc-surface-2) !important;
+    color: var(--fc-muted) !important;
+    border-top: 0;
+    border-bottom: 1px solid var(--fc-border);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.flip-city-admin .table tbody tr {
+    transition: background-color .15s ease;
+}
+
+.flip-city-admin .table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.flip-city-admin .table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.flip-city-admin .table td.text-muted,
+.flip-city-admin .table td .text-muted {
+    color: var(--fc-muted) !important;
+}
+
+.flip-city-admin .table td a {
+    color: var(--fc-navy);
+    font-weight: 600;
+}
+
+.flip-city-admin .table td a.btn {
+    font-weight: 500;
+}
+
+.flip-city-admin .table td[colspan] {
+    padding: 28px 14px;
+    color: var(--fc-muted);
+}
+
+.flip-city-admin .table td[colspan] .fa-2x {
+    color: var(--fc-border);
+}
+
+.flip-city-admin .table-striped tbody tr:nth-of-type(odd) {
+    background: transparent;
+}
+
+.flip-city-admin .btn {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.flip-city-admin .btn-sm {
+    padding: 5px 10px;
+    font-size: 13px;
+}
+
+.flip-city-admin .btn-xs {
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 6px;
+}
+
+.flip-city-admin .badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.flip-city-admin .badge-success {
+    background: var(--fc-good-soft);
+    color: var(--fc-good);
+}
+
+.flip-city-admin .badge-danger {
+    background: var(--fc-bad-soft);
+    color: var(--fc-bad);
+}
+
+.flip-city-admin .badge-warning {
+    background: var(--fc-warn-soft);
+    color: var(--fc-warn);
+}
+
+.flip-city-admin .badge-info,
+.flip-city-admin .badge-primary {
+    background: var(--fc-accent-soft);
+    color: #0a7e97;
+}
+
+.flip-city-admin .badge-secondary {
+    background: var(--fc-surface-2);
+    color: var(--fc-muted);
+}
+
+.flip-city-admin .alert {
+    border-radius: var(--fc-radius);
+    border: 1px solid transparent;
+    font-size: 14px;
+}
+
+.flip-city-admin .alert-success {
+    background: var(--fc-good-soft);
+    border-color: #bbf7d0;
+    color: #166534;
+}
+
+.flip-city-admin .alert-danger {
+    background: var(--fc-bad-soft);
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+.flip-city-admin .alert-info {
+    background: var(--fc-accent-soft);
+    border-color: #bae6f0;
+    color: #0a5f72;
+}
+
+.flip-city-admin .alert-warning {
+    background: var(--fc-warn-soft);
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.flip-city-admin label,
+.flip-city-admin .col-form-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fc-navy);
+}
+
+.flip-city-admin .form-control,
+.flip-city-admin .custom-select {
+    border-color: var(--fc-border);
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.flip-city-admin .form-control:focus,
+.flip-city-admin .custom-select:focus {
+    border-color: var(--fc-accent);
+    box-shadow: 0 0 0 3px var(--fc-accent-soft);
+}
+
+.flip-city-admin .form-text {
+    font-size: 12px;
+    color: var(--fc-muted) !important;
+}
+
+.flip-city-admin .pagination {
+    margin: 16px 0 0;
+    gap: 4px;
+}
+
+.flip-city-admin .page-link {
+    border-radius: 8px !important;
+    border-color: var(--fc-border);
+    color: var(--fc-navy);
+}
+
+.flip-city-admin .page-item.active .page-link {
+    background: var(--fc-navy);
+    border-color: var(--fc-navy);
+}
+
+.flip-city-admin .text-gray-800 {
+    color: var(--fc-navy) !important;
+}
+
+.flip-city-admin .fc-revenue .card-header {
+    padding: 12px 16px !important;
+}
+
+.flip-city-admin .fc-revenue-date {
+    font-size: 12px;
+    color: var(--fc-muted);
+}
+
+.flip-city-admin .fc-revenue .card-body {
+    padding: 14px 16px;
+}
+
+.flip-city-admin .fc-revenue-total {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.flip-city-admin .fc-revenue-total-label {
+    font-size: 13px;
+    color: var(--fc-muted);
+}
+
+.flip-city-admin .fc-revenue-total-val {
+    font-family: var(--fc-display);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--fc-navy);
+}
+
+.flip-city-admin .fc-revenue-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.flip-city-admin .fc-revenue-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--fc-surface-2);
+}
+
+.flip-city-admin .fc-revenue-label {
+    font-size: 11px;
+    color: var(--fc-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flip-city-admin .fc-revenue-label i {
+    margin-right: 3px;
+}
+
+.flip-city-admin .fc-revenue-val {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.flip-city-admin .fc-revenue-item.is-cash .fc-revenue-label i,
+.flip-city-admin .fc-revenue-item.is-cash .fc-revenue-val {
+    color: var(--fc-good);
+}
+
+.flip-city-admin .fc-revenue-item.is-card .fc-revenue-label i,
+.flip-city-admin .fc-revenue-item.is-card .fc-revenue-val {
+    color: #0a7e97;
+}
+
+.flip-city-admin .fc-revenue-item.is-auto .fc-revenue-label i,
+.flip-city-admin .fc-revenue-item.is-auto .fc-revenue-val {
+    color: var(--fc-warn);
+}
+
+.flip-city-admin .fc-revenue-note {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: var(--fc-muted);
+}
+
+.flip-city-admin .fc-revenue-note i {
+    margin-right: 4px;
+    color: var(--fc-accent);
+}
+
+.flip-city-admin .fc-revenue-closed {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--fc-good-soft);
+    color: #166534;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.flip-city-admin .fc-revenue-closed i {
+    margin-right: 4px;
+}
+
+.flip-city-admin .elapsed-time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.flip-city-admin .expected-fee {
+    color: var(--fc-warn) !important;
+    white-space: nowrap;
+}
+
+.flip-city-admin .h4 span {
+    font-size: 32px;
+}
+
+.flip-city-admin .fc-sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--fc-muted);
+    white-space: nowrap;
+}
+
+.fc-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.fc-min-note {
+    margin: 6px 0 2px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--warn-soft, #fef3c7);
+    color: #92400e;
+    font-size: 12px;
+}
+
+.fc-counts .form-text {
+    font-size: 11px;
+    color: var(--muted, #64748b);
+}
+
+.fc-amount-box {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: var(--navy, #0f1b3d);
+    color: #fff;
+}
+
+.fc-amount-label {
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, .7);
+}
+
+.fc-amount-value {
+    font-family: var(--font-display, "Plus Jakarta Sans", "Inter", system-ui, sans-serif);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.fc-amount-sub {
+    display: block;
+    margin-top: 4px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, .7);
+}
+
+#qr_token_input {
+    font-size: 24px;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+.flip-city-admin .card-header .form-inline {
+    gap: 6px;
+}
+
+.flip-city-admin .card-header .form-inline .form-control,
+.flip-city-admin .card-header .form-inline .custom-select {
+    height: 34px;
+    margin: 0 !important;
+}
+
+.flip-city-admin .fc-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.flip-city-admin .fc-actions form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.flip-city-admin .fc-act,
+.modal .fc-act {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 9px;
+    border: 1px solid var(--fc-border);
+    border-radius: 8px;
+    background: var(--fc-surface);
+    color: #475569;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.flip-city-admin .fc-act i {
+    width: 14px;
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
+}
+
+.flip-city-admin .fc-act:hover {
+    border-color: #cbd5e1;
+    background: var(--fc-surface-2);
+    color: var(--fc-navy);
+    text-decoration: none;
+}
+
+.flip-city-admin .fc-act:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.flip-city-admin .fc-act:active {
+    background: #e2e8f0;
+}
+
+.flip-city-admin .fc-act:focus {
+    outline: none;
+}
+
+.flip-city-admin .fc-act:focus-visible {
+    outline: 2px solid var(--fc-accent);
+    outline-offset: 2px;
+}
+
+.flip-city-admin .fc-act-ok {
+    color: var(--fc-good);
+}
+
+.flip-city-admin .fc-act-ok:hover {
+    border-color: #bbf7d0;
+    background: var(--fc-good-soft);
+    color: #166534;
+}
+
+.flip-city-admin .fc-act-warn {
+    color: var(--fc-warn);
+}
+
+.flip-city-admin .fc-act-warn:hover {
+    border-color: #fde68a;
+    background: var(--fc-warn-soft);
+    color: #92400e;
+}
+
+.flip-city-admin .fc-act-danger {
+    color: var(--fc-bad);
+}
+
+.flip-city-admin .fc-act-danger:hover {
+    border-color: #fecaca;
+    background: var(--fc-bad-soft);
+    color: #991b1b;
+}
+
+.flip-city-admin .fc-act-go {
+    border-color: var(--fc-good);
+    background: var(--fc-good);
+    color: #fff;
+}
+
+.flip-city-admin .fc-act-go:hover {
+    border-color: #15803d;
+    background: #15803d;
+    color: #fff;
+}
+
+.flip-city-admin .fc-act-go:active {
+    background: #166534;
+}
+
+.flip-city-admin .fc-act-primary {
+    border-color: var(--fc-navy);
+    background: var(--fc-navy);
+    color: #fff;
+}
+
+.flip-city-admin .fc-act-primary:hover {
+    border-color: #1e2f5e;
+    background: #1e2f5e;
+    color: #fff;
+}
+
+.flip-city-admin .fc-act-primary:active {
+    background: #0a1430;
+}
+
+.flip-city-admin .table td .fc-act + .fc-act,
+.flip-city-admin .table td .fc-act + form {
+    margin-left: 6px;
+}
+
+.flip-city-admin .fc-actions .fc-act + .fc-act,
+.flip-city-admin .fc-actions .fc-act + form {
+    margin-left: 0;
+}
+
+.flip-city-admin .modal-content,
+.modal .flip-city-admin .modal-content {
+    border-radius: var(--fc-radius-lg);
+}
+
+@media (max-width: 1399px) {
+    .flip-city-admin .fc-revenue-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .table {
-        th {
-            background-color: #f8f9fc;
-        }
+    .flip-city-admin .fc-revenue-item {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 991px) {
+    .flip-city-admin .fc-revenue-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .btn-xs {
-        padding: 0.125rem 0.25rem;
-        font-size: 0.75rem;
+    .flip-city-admin .fc-revenue-item {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 575px) {
+    .flip-city-admin {
+        padding-top: 12px;
     }
 
-    #qr_token_input {
-        font-size: 1.5rem;
-        text-align: center;
-        letter-spacing: 2px;
+    .flip-city-admin .fc-revenue-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 
-    .h4 span {
-        font-size: 2rem;
+    .flip-city-admin .fc-revenue-item {
+        flex-direction: row;
+        justify-content: space-between;
     }
+
+    .flip-city-admin .table th,
+    .flip-city-admin .table td {
+        padding: 10px;
+    }
+}
+
+.flip-city-admin .fc-act-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.flip-city-admin .fc-time-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 320px;
 }

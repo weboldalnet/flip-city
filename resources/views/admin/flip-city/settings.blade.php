@@ -3,7 +3,7 @@
 @section('title', 'Beállítások - Flip-City')
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid flip-city-admin">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Flip-City Beállítások</h1>
     </div>
@@ -21,7 +21,7 @@
                         <div class="form-group row">
                             <label class="col-sm-4 col-form-label font-weight-bold">Alap óradíj (Ft/óra)</label>
                             <div class="col-sm-8">
-                                <input type="number" name="default_rate" class="form-control" value="{{ $flipCitySettings['default_rate'] }}" min="0" required>
+                                <input type="number" name="default_rate" class="form-control" value="{{ old('default_rate', $flipCitySettings['default_rate']) }}" min="0" required>
                                 <small class="text-muted">A beléptetéskor használt alapértelmezett óradíj.</small>
                             </div>
                         </div>
@@ -29,8 +29,44 @@
                         <div class="form-group row">
                             <label class="col-sm-4 col-form-label font-weight-bold">Kísérő/fő ára (Ft)</label>
                             <div class="col-sm-8">
-                                <input type="number" name="companion_price" class="form-control" value="{{ $flipCitySettings['companion_price'] }}" min="0" required>
+                                <input type="number" name="companion_price" class="form-control" value="{{ old('companion_price', $flipCitySettings['companion_price']) }}" min="0" required>
                                 <small class="text-muted">Egyszeri díj kísérőnként belépéskor.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Gyerek óradíj (Ft/óra)</label>
+                            <div class="col-sm-8">
+                                <input type="number" name="child_rate" class="form-control" value="{{ old('child_rate', $flipCitySettings['child_rate']) }}" min="0" required>
+                                <small class="text-muted">A korhatár alatti, kedvezményes játszók óradíja.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Gyerek korhatár (év)</label>
+                            <div class="col-sm-8">
+                                <input type="number" name="child_age_limit" class="form-control" value="{{ old('child_age_limit', $flipCitySettings['child_age_limit']) }}" min="1" max="18" required>
+                                <small class="text-muted">Ennél fiatalabb játszó kapja a gyerek óradíjat (beléptetéskor jelenik meg).</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Minimum perc</label>
+                            <div class="col-sm-8">
+                                <input type="number" name="min_minutes" class="form-control" value="{{ old('min_minutes', $flipCitySettings['min_minutes']) }}" min="0" max="600" required>
+                                <small class="text-muted">Ennyi perc díja mindenképp fizetendő fejenként, akkor is, ha valaki hamarabb távozik. Utána percdíj szerint számol. A kísérő díja ettől független, egyszeri.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Foglalható időszak</label>
+                            <div class="col-sm-8">
+                                <div class="fc-time-range">
+                                    <input type="time" name="booking_from" class="form-control" value="{{ old('booking_from', $flipCitySettings['booking_from']) }}" required aria-label="Foglalható időszak kezdete">
+                                    <span>–</span>
+                                    <input type="time" name="booking_until" class="form-control" value="{{ old('booking_until', $flipCitySettings['booking_until']) }}" required aria-label="Foglalható időszak vége">
+                                </div>
+                                <small class="text-muted">A profil oldali foglalásnál csak ezen belüli időpont adható meg, a mai napra pedig csak még el nem múlt időpont.</small>
                             </div>
                         </div>
 
@@ -51,7 +87,7 @@
                                     <option value="1" {{ $flipCitySettings['show_profile_booking'] ? 'selected' : '' }}>Bekapcsolva</option>
                                     <option value="0" {{ !$flipCitySettings['show_profile_booking'] ? 'selected' : '' }}>Kikapcsolva</option>
                                 </select>
-                                <small class="text-muted">Ha ki van kapcsolva, a profil oldalon nem látszanak a foglalások.</small>
+                                <small class="text-muted">Ha ki van kapcsolva, a profilon nem lehet foglalni, és a foglalási táblák sem jelennek meg (profil, irányítópult, ügyfél-adatlap).</small>
                             </div>
                         </div>
 
@@ -82,4 +118,5 @@
         </div>
     </div>
 </div>
+<link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/admin/flip-city.css') }}">
 @endsection

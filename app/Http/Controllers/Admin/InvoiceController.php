@@ -30,19 +30,13 @@ class InvoiceController extends FlipCityAdminController
 
         $entry = Entry::findOrFail($validated['entry_id']);
 
-        // Lezárjuk a belépést, ha még nincs lezárva
+        if ($entry->end_time && Invoice::where('entry_id', $entry->id)->where('created_at', '>=', $entry->end_time)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Ennek a belépésnek a díja már ki van fizetve.']);
+        }
+
         if (!$entry->end_time) {
             $entry->end_time = now();
-
-            // Ha a frontend küldött egy rögzített (megállított) összeget, használjuk azt
-            if (isset($validated['final_cost'])) {
-                $entry->total_cost = (float) $validated['final_cost'];
-            } else {
-                $diffInSeconds = $entry->start_time->diffInSeconds($entry->end_time);
-                $durationMinutes = ceil($diffInSeconds / 60);
-                if ($durationMinutes < 1) $durationMinutes = 1;
-                $entry->total_cost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count);
-            }
+            $entry->total_cost = $this->payableCost($entry, $validated['final_cost'] ?? null);
             $entry->save();
         }
 
@@ -97,14 +91,8 @@ class InvoiceController extends FlipCityAdminController
             ]);
         }
 
-        // Napi összesítő frissítése
-        $summary = DailySummary::firstOrCreate(['summary_date' => date('Y-m-d')]);
-        if ($validated['payment_method'] === 'cash') {
-            $summary->total_cash += $amount;
-        } else {
-            $summary->total_card += $amount;
-        }
-        $summary->save();
+        DailySummary::firstOrCreate(['summary_date' => date('Y-m-d')])
+            ->increment($validated['payment_method'] === 'cash' ? 'total_cash' : 'total_card', $amount);
 
         return response()->json([
             'success'     => true,
@@ -112,6 +100,20 @@ class InvoiceController extends FlipCityAdminController
             'change'      => $change,
             'invoice_id'  => $invoice->id,
         ]);
+    }
+
+    private function payableCost(Entry $entry, $shownCost): float
+    {
+        $current = $entry->costBreakdown($entry->end_time)['total'];
+
+        if ($shownCost === null) {
+            return $current;
+        }
+
+        $earliest = $entry->costBreakdown($entry->end_time->copy()->subMinutes(5))['total'];
+        $shownCost = (float) $shownCost;
+
+        return $shownCost >= $earliest && $shownCost <= $current ? $shownCost : $current;
     }
 
     public function print(Invoice $invoice)

@@ -5,7 +5,7 @@
 
 @section('extendCSS')
     @if($flipCitySettings['css_published'])
-        <link rel="stylesheet" href="{{ asset('packages/flip-city/css/site/flip-city.css') }}">
+        <link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/site/flip-city.css') }}">
     @endif
 @endsection
 
@@ -19,19 +19,7 @@
                         <h4 class="mb-0">Bejelentkezés</h4>
                     </div>
                     <div class="card-body">
-                        @if(session('success'))
-                            <div class="alert alert-success">{{ session('success') }}</div>
-                        @endif
-
-                        @if($errors->any())
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
-                                    @foreach($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
+                        @include('flip-city::site.flip-city.partials.flash')
 
                         <form action="{{ route('flip-city.login') }}" method="POST">
                             @csrf
@@ -75,7 +63,7 @@
 
 @section('script')
     @if($flipCitySettings['js_published'])
-        <script src="{{ asset('packages/flip-city/js/site/flip-city.js') }}"></script>
+        <script src="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/js/site/flip-city.js') }}"></script>
     @endif
 @endsection
 

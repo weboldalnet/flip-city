@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float $rate
  * @property int $guest_count
  * @property int $companions_count
+ * @property int $children_count
+ * @property float|null $child_rate
  * @property bool $is_auto_closed
  * @property bool $is_failed
  * @property float|null $total_cost
@@ -30,7 +32,8 @@ class Entry extends Model
 
     protected $fillable = [
         'user_id', 'start_time', 'end_time', 'rate',
-        'guest_count', 'companions_count', 'is_auto_closed', 'is_failed', 'total_cost'
+        'guest_count', 'companions_count', 'is_auto_closed', 'is_failed', 'total_cost',
+        'children_count', 'child_rate'
     ];
 
     protected $casts = [
@@ -42,6 +45,8 @@ class Entry extends Model
         'total_cost' => 'float',
         'guest_count' => 'integer',
         'companions_count' => 'integer',
+        'children_count' => 'integer',
+        'child_rate' => 'float',
     ];
 
     public function user(): BelongsTo
@@ -56,14 +61,56 @@ class Entry extends Model
 
     public function calculateCurrentCost(): float
     {
-        $endTime = $this->end_time ?: now();
-        $diffInSeconds = $this->start_time->diffInSeconds($endTime);
-        $durationMinutes = ceil($diffInSeconds / 60);
-        if ($durationMinutes < 1) $durationMinutes = 1;
+        return $this->costBreakdown()['total'];
+    }
 
+    public function adultsCount(): int
+    {
+        return max(0, (int) $this->guest_count - (int) $this->children_count);
+    }
+
+    /**
+     * Díjszámítás egy helyen: felnőtt és gyerek percdíj a minimum perccel, a kísérő egyszeri fix díja.
+     * $adults / $children: részleges távozásnál csak a távozók; $withCompanions: a kísérő díja ekkor nem jár.
+     */
+    public function costBreakdown($endTime = null, ?int $adults = null, ?int $children = null, bool $withCompanions = true): array
+    {
+        $endTime = $endTime ?: ($this->end_time ?: now());
+        $minutes = (int) ceil($this->start_time->diffInSeconds($endTime) / 60);
+        if ($minutes < 1) {
+            $minutes = 1;
+        }
+
+        $minMinutes = (int) FlipCitySettings::get('min_minutes', config('flip-city.min_minutes', 0));
+        $billedMinutes = max($minutes, $minMinutes);
+
+        $adults = $adults ?? $this->adultsCount();
+        $children = $children ?? (int) $this->children_count;
+        $adultRate = (float) $this->rate;
+        $childRate = $this->child_rate !== null ? (float) $this->child_rate : $adultRate;
+
+        $adultCost = round(($billedMinutes / 60) * $adultRate * $adults);
+        $childCost = round(($billedMinutes / 60) * $childRate * $children);
+
+        $companions = $withCompanions ? (int) $this->companions_count : 0;
         $companionPrice = (float) FlipCitySettings::get('companion_price', config('flip-city.companion_price', 500));
-        $companionsCost = ($this->companions_count ?? 0) * $companionPrice;
+        $companionsCost = $companions * $companionPrice;
 
-        return round(($durationMinutes / 60) * $this->rate * $this->guest_count) + $companionsCost;
+        return [
+            'minutes' => $minutes,
+            'billed_minutes' => $billedMinutes,
+            'min_minutes' => $minMinutes,
+            'min_applied' => $billedMinutes > $minutes,
+            'adults' => $adults,
+            'children' => $children,
+            'adult_rate' => $adultRate,
+            'child_rate' => $childRate,
+            'adult_cost' => $adultCost,
+            'child_cost' => $childCost,
+            'companions' => $companions,
+            'companion_price' => $companionPrice,
+            'companions_cost' => $companionsCost,
+            'total' => $adultCost + $childCost + $companionsCost,
+        ];
     }
 }

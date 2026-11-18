@@ -20,16 +20,18 @@ $(document).ready(function() {
             // Várható díj frissítése
             var $row = $(this).closest('tr');
             var rate = parseFloat($row.data('rate'));
-            var guestCountText = $row.find('.guest-count').text();
-            var guestCount = parseInt(guestCountText) || 1;
-            
+            var childRate = parseFloat($row.data('child-rate'));
+            if (isNaN(childRate)) childRate = rate;
+            var guestCount = parseInt($row.data('guests')) || parseInt($row.find('.guest-count').text()) || 1;
+            var childCount = parseInt($row.data('children')) || 0;
             var companions = parseInt($row.data('companions')) || 0;
             var companionPrice = parseFloat($row.data('companion-price')) || 0;
-            
+            var billed = Math.max(diffMins, parseInt($row.data('min-minutes')) || 0);
+
             if (rate && $row.find('.expected-fee').length) {
-                var baseFee = Math.round((diffMins / 60) * rate * guestCount);
-                var companionsFee = companions * companionPrice;
-                var totalFee = baseFee + companionsFee;
+                var totalFee = Math.round((billed / 60) * rate * (guestCount - childCount))
+                    + Math.round((billed / 60) * childRate * childCount)
+                    + companions * companionPrice;
                 $row.find('.expected-fee').text(numberFormat(totalFee) + ' Ft');
             }
         });
@@ -44,5 +46,4 @@ $(document).ready(function() {
         setInterval(updateElapsedTimes, 15000);
     }
 
-    console.log('Flip-City Site JS loaded.');
 });

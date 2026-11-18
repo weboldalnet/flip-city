@@ -15,6 +15,10 @@ return [
     'currency' => 'HUF',
     'billing_enabled' => env('FLIPCITY_BILLING_ENABLED', false),
     'companion_price' => 500, // Kísérő/fő ára
+    'child_age_limit' => 6,
+    'min_minutes' => 20, // Minimum számlázott perc fejenként
+    'booking_from' => '08:00',
+    'booking_until' => '16:00',
     'profile_qr_print_text' => 'Kérjük, mutassa be ezt a kódot a belépéshez!',
     'show_profile_booking' => false,
     'profile_qr_print_enabled' => true,

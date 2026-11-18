@@ -5,7 +5,7 @@
 
 @section('extendCSS')
     @if($flipCitySettings['css_published'])
-        <link rel="stylesheet" href="{{ asset('packages/flip-city/css/site/flip-city.css') }}">
+        <link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/site/flip-city.css') }}">
     @endif
 @endsection
 
@@ -68,7 +68,7 @@
 
 @section('script')
     @if($flipCitySettings['js_published'])
-        <script src="{{ asset('packages/flip-city/js/site/flip-city.js') }}"></script>
+        <script src="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/js/site/flip-city.js') }}"></script>
     @endif
 @endsection
 

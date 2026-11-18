@@ -14,6 +14,7 @@
                                 <th>Belépés/Meghiúsult</th>
                                 <th class="text-right">Összeg</th>
                                 <th class="text-center">Fő</th>
+                                <th class="text-center">Gyerek</th>
                                 <th class="text-center">Kis.</th>
                                 <th>Művelet</th>
                             </tr>
@@ -34,20 +35,21 @@
                                 <td class="text-right font-weight-bold text-danger">
                                     {{ number_format($entry->total_cost ?: $entry->calculateCurrentCost(), 0, ',', ' ') }} Ft
                                 </td>
-                                <td class="text-center">{{ $entry->guest_count }}</td>
+                                <td class="text-center">{{ $entry->guest_count - $entry->children_count }}</td>
+                                <td class="text-center">{{ $entry->children_count }}</td>
                                 <td class="text-center">{{ $entry->companions_count }}</td>
                                 <td>
                                     <form action="{{ route('flip-city.admin.entries.unfail', $entry->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Biztosan visszaállítja ezt a belépést és hozzáadja a napi bevételhez?')">
                                         @csrf
-                                        <button type="submit" class="btn btn-xs btn-success">
-                                            <i class="fas fa-undo mr-1"></i> Visszaállítás
+                                        <button type="submit" class="fc-act fc-act-ok">
+                                            <i class="fas fa-undo"></i><span>Visszaállítás</span>
                                         </button>
                                     </form>
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
+                                <td colspan="8" class="text-center text-muted py-4">
                                     Nincs meghiúsult belépés.
                                 </td>
                             </tr>

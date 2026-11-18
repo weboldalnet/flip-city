@@ -24,7 +24,7 @@ Route::middleware('web')->group(function () {
             Route::get('/flip-city/setup-password/{token}', 'PasswordResetController@showSetupForm')->name('flip-city.password.setup');
             Route::post('/flip-city/reset-password', 'PasswordResetController@reset')->name('flip-city.password.update');
 
-            Route::middleware('auth')->group(function () {
+            Route::middleware('flip-city.auth')->group(function () {
                 Route::get('/flip-city/profile', 'ProfileController@index')->name('flip-city.profile');
                 Route::get('/flip-city/entries', 'ProfileController@entries')->name('flip-city.entries.index');
                 if (config('flip-city.profile_qr_print_enabled', true)) {
@@ -32,7 +32,7 @@ Route::middleware('web')->group(function () {
                 }
                 Route::post('/flip-city/booking', 'BookingController@store')->name('flip-city.booking.store');
                 if (config('flip-city.billing_enabled', true)) {
-                    Route::get('/flip-city/invoices/{invoice}/download', 'InvoiceController@download')->name('flip-city.invoices.download');
+                    Route::get('/flip-city/invoices/{invoice}/download', [\Weboldalnet\FlipCity\Http\Controllers\Admin\InvoiceController::class, 'download'])->name('flip-city.invoices.download');
                 }
             });
         });

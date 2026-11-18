@@ -65,6 +65,10 @@ class RegistrationController extends SiteExtendedController
             return redirect()->route('flip-city.register.show')->with('error', 'Érvénytelen aktiváló link.');
         }
 
+        if ($user->is_blocked) {
+            return redirect()->route('flip-city.login.show')->with('error', 'A fiókja le van tiltva.');
+        }
+
         $qrToken = $user->qr_code_token ?? Str::uuid()->toString();
         $qrSvg = QRCodeService::generateQRCode($qrToken);
 
@@ -77,6 +81,7 @@ class RegistrationController extends SiteExtendedController
         ]);
 
         auth()->login($user);
+        request()->session()->regenerate();
 
         return redirect()->route('flip-city.profile')->with('success', 'Fiókja sikeresen aktiválva! Üdvözöljük a Flip-City-ben.');
     }

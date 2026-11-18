@@ -1,13 +1,14 @@
 @extends("admin.layouts.layout")
 
 @section('title', 'Flip-City Dashboard')
+@section('wnSajatHibalista', '1')
 
 @section("content")
     
-<div class="container-fluid flip-city-admin" data-companion-price="{{ $flipCitySettings['companion_price'] }}">
+<div class="container-fluid flip-city-admin">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Flip-City Dashboard</h1>
-        <div id="dashboard_data" data-companion-price="{{ $flipCitySettings['companion_price'] }}">
+        <div id="dashboard_data" data-companion-price="{{ $flipCitySettings['companion_price'] }}" data-min-minutes="{{ $flipCitySettings['min_minutes'] }}" data-child-age="{{ $flipCitySettings['child_age_limit'] }}">
             <a href="{{ route('flip-city.admin.users.index') }}" class="btn btn-sm btn-outline-primary shadow-sm mr-1">
                 <i class="fas fa-users fa-sm mr-1"></i> Felhasználók
             </a>
@@ -25,13 +26,13 @@
         </div>
     </div>
 
-    @if(session('success'))
+    @if(session('success') && !session('wn_toast'))
         <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
         </div>
     @endif
-    @if(session('error'))
+    @if(session('error') && !session('wn_toast'))
         <div class="alert alert-danger alert-dismissible fade show">
             {{ session('error') }}
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
@@ -66,6 +67,7 @@
                                     <th>Belépés</th>
                                     <th>Eltelt idő</th>
                                     <th class="text-center">Fő</th>
+                                    <th class="text-center">Gyerek</th>
                                     <th class="text-center">Kis.</th>
                                     <th class="text-center">Várható díj</th>
                                     <th class="text-center">Művelet</th>
@@ -73,7 +75,7 @@
                             </thead>
                             <tbody>
                                 @forelse($activeEntries as $entry)
-                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}">
+                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}" data-child-rate="{{ $entry->child_rate ?? $entry->rate }}" data-guests="{{ $entry->guest_count }}" data-children="{{ $entry->children_count }}" data-companions="{{ $entry->companions_count }}">
                                     <td class="font-weight-bold">
                                         <a href="{{ route('flip-city.admin.users.show', $entry->user_id) }}">
                                             {{ $entry->user->name ?? '–' }}
@@ -88,30 +90,36 @@
                                         @endphp
                                         {{ $durationMinutes }} perc
                                     </td>
-                                    <td class="text-center guest-count">{{ $entry->guest_count }}</td>
+                                    <td class="text-center guest-count">{{ $entry->guest_count - $entry->children_count }}</td>
+                                    <td class="text-center children-count">{{ $entry->children_count }}</td>
                                     <td class="text-center companions-count">{{ $entry->companions_count }}</td>
-                                    <td class="text-center text-warning font-weight-bold expected-fee">
-                                        {{ number_format(round(($durationMinutes / 60) * $entry->rate * $entry->guest_count) + ($entry->companions_count * $flipCitySettings['companion_price']), 0, ',', ' ') }} Ft
+                                    <td class="text-center font-weight-bold expected-fee">
+                                        {{ number_format($entry->calculateCurrentCost(), 0, ',', ' ') }} Ft
                                     </td>
                                     <td class="text-center text-nowrap">
-                                        <button class="btn btn-sm btn-danger checkout-btn"
+                                        <button class="fc-act fc-act-primary checkout-btn"
                                                 data-id="{{ $entry->id }}"
                                                 title="Kiléptetés és fizetés">
-                                            <i class="fas fa-sign-out-alt mr-1"></i> Kilép
+                                            <i class="fas fa-sign-out-alt"></i><span>Kiléptetés</span>
                                         </button>
                                         @if($entry->guest_count > 1)
-                                        <button class="btn btn-sm btn-info partial-btn"
+                                        <button class="fc-act partial-btn"
                                                 data-id="{{ $entry->id }}"
                                                 data-max="{{ $entry->guest_count }}"
+                                                data-children="{{ $entry->children_count }}"
                                                 title="Részleges távozás">
-                                            <i class="fas fa-users mr-1"></i> Részleges
+                                            <i class="fas fa-user-minus"></i><span>Részleges</span>
                                         </button>
+                                        @else
+                                        <span class="fc-act fc-act-placeholder" aria-hidden="true">
+                                            <i class="fas fa-user-minus"></i><span>Részleges</span>
+                                        </span>
                                         @endif
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-4">
+                                    <td colspan="8" class="text-center text-muted py-4">
                                         <i class="fas fa-door-open fa-2x mb-2 d-block"></i>
                                         Jelenleg nincs aktív vendég a rendszerben.
                                     </td>
@@ -125,59 +133,44 @@
         </div>
 
         <div class="col-xl-4 col-lg-5">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Napi Bevétel ({{ date('Y.m.d') }})</h6>
+            <div class="card shadow mb-4 fc-revenue">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h6 class="m-0">Napi bevétel</h6>
+                    <span class="fc-revenue-date">{{ date('Y.m.d.') }}</span>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="mr-3 text-success"><i class="fas fa-money-bill-wave fa-2x"></i></div>
-                        <div>
-                            <div class="small text-muted">Készpénz</div>
-                            <div class="h5 mb-0 font-weight-bold text-success">
-                                {{ number_format($todaySummary->total_cash ?? 0, 0, ',', ' ') }} Ft
-                            </div>
-                        </div>
+                    <div class="fc-revenue-total">
+                        <span class="fc-revenue-total-label">Összesen</span>
+                        <span class="fc-revenue-total-val">{{ number_format(($todaySummary->total_cash ?? 0) + ($todaySummary->total_card ?? 0) + ($todaySummary->total_auto ?? 0), 0, ',', ' ') }} Ft</span>
                     </div>
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="mr-3 text-primary"><i class="fas fa-credit-card fa-2x"></i></div>
-                        <div>
-                            <div class="small text-muted">Bankkártya</div>
-                            <div class="h5 mb-0 font-weight-bold text-primary">
-                                {{ number_format($todaySummary->total_card ?? 0, 0, ',', ' ') }} Ft
-                            </div>
+                    <div class="fc-revenue-grid">
+                        <div class="fc-revenue-item is-cash">
+                            <span class="fc-revenue-label"><i class="fas fa-money-bill-wave"></i> Készpénz</span>
+                            <span class="fc-revenue-val">{{ number_format($todaySummary->total_cash ?? 0, 0, ',', ' ') }} Ft</span>
                         </div>
-                    </div>
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="mr-3 text-warning"><i class="fas fa-robot fa-2x"></i></div>
-                        <div>
-                            <div class="small text-muted">Automatikus</div>
-                            <div class="h5 mb-0 font-weight-bold text-warning">
-                                {{ number_format($todaySummary->total_auto ?? 0, 0, ',', ' ') }} Ft
-                            </div>
+                        <div class="fc-revenue-item is-card">
+                            <span class="fc-revenue-label"><i class="fas fa-credit-card"></i> Kártya</span>
+                            <span class="fc-revenue-val">{{ number_format($todaySummary->total_card ?? 0, 0, ',', ' ') }} Ft</span>
+                        </div>
+                        <div class="fc-revenue-item is-auto">
+                            <span class="fc-revenue-label"><i class="fas fa-robot"></i> Automatikus</span>
+                            <span class="fc-revenue-val">{{ number_format($todaySummary->total_auto ?? 0, 0, ',', ' ') }} Ft</span>
                         </div>
                     </div>
                     @if(config('flip-city.billing_enabled', true))
-                    <div class="alert alert-info small py-1 mt-3 mb-0">
-                        <i class="fas fa-info-circle mr-1"></i> A bevételek a számlázott tételekből származnak.
-                    </div>
+                    <p class="fc-revenue-note"><i class="fas fa-info-circle"></i> A bevételek a számlázott tételekből származnak.</p>
                     @endif
-                    <hr>
-                    <div class="h5 font-weight-bold text-dark mb-3">
-                        Összesen:
-                        {{ number_format(($todaySummary->total_cash ?? 0) + ($todaySummary->total_card ?? 0) + ($todaySummary->total_auto ?? 0), 0, ',', ' ') }} Ft
-                    </div>
                     @if($todaySummary && $todaySummary->is_closed)
-                        <div class="alert alert-info mb-0">
-                            <i class="fas fa-check-circle mr-1"></i>
+                        <div class="fc-revenue-closed">
+                            <i class="fas fa-check-circle"></i>
                             A nap lezárva: {{ $todaySummary->closed_at?->format('H:i') }}
                         </div>
                     @else
                         <form action="{{ route('flip-city.admin.close-day') }}" method="POST"
                               onsubmit="return confirm('Biztosan lezárja a mai napot?')">
                             @csrf
-                            <button type="submit" class="btn btn-warning btn-block">
-                                <i class="fas fa-lock mr-1"></i> Nap Lezárása
+                            <button type="submit" class="btn btn-warning btn-block btn-sm">
+                                <i class="fas fa-lock mr-1"></i> Nap lezárása
                             </button>
                         </form>
                     @endif
@@ -186,41 +179,32 @@
         </div>
     </div>
 
-    @include('flip-city::admin.flip-city.dashboard._today_bookings')
+    @if($flipCitySettings['show_profile_booking'])
+        @include('flip-city::admin.flip-city.dashboard._today_bookings')
 
-    @include('flip-city::admin.flip-city.dashboard._future_bookings')
+        @include('flip-city::admin.flip-city.dashboard._future_bookings')
+    @endif
 
     @include('flip-city::admin.flip-city.dashboard._failed_entries')
 </div>
 
 <!-- Checkin Manual Modal -->
 <div class="modal fade" id="checkinManualModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Beléptetés</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <form id="checkin_manual_form" action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST">
+            <form id="checkin_manual_form" action="{{ route('flip-city.admin.entries.store-manual') }}" method="POST"
+                  data-manual-url="{{ route('flip-city.admin.entries.store-manual') }}"
+                  data-booking-url="{{ route('flip-city.admin.entries.store-from-booking') }}">
                 @csrf
                 <input type="hidden" name="user_id" id="checkin_user_id">
                 <input type="hidden" name="booking_id" id="checkin_booking_id">
                 <div class="modal-body">
                     <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Fő (játszó) <span class="text-danger">*</span></label>
-                                <input type="number" name="guest_count" id="checkin_guest_count" class="form-control" value="1" min="1" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Kis. (kísérő)</label>
-                                <input type="number" name="companions_count" id="checkin_companions_count" class="form-control" value="0" min="0">
-                            </div>
-                        </div>
-                    </div>
+                    @include('flip-city::admin.flip-city.partials.checkin-counts', ['prefix' => 'checkin'])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
@@ -308,19 +292,7 @@
                     </div>
                     <small class="form-text text-muted">Nyomja meg Entert vagy kattintson a gombra a feldolgozáshoz.</small>
                 </div>
-                <div id="qr_guest_count_wrap" class="form-group d-none">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label for="qr_guest_count">Fő (játszó) <span class="text-danger">*</span></label>
-                            <input type="number" id="qr_guest_count" class="form-control" value="1" min="1" max="50" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="qr_companions_count">Kis. (kísérő)</label>
-                            <input type="number" id="qr_companions_count" class="form-control" value="0" min="0" max="50">
-                        </div>
-                    </div>
-                </div>
-                <div id="qr_result" class="mt-3"></div>
+<div id="qr_result" class="mt-3"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Bezár</button>
@@ -340,26 +312,30 @@
             <form id="checkout_form">
                 @csrf
                 <input type="hidden" name="entry_id" id="checkout_entry_id">
-                <input type="hidden" name="payment_method" id="payment_method_hidden" value="cash">
-                <div class="modal-body">
+<div class="modal-body">
                     <div id="checkout_details_breakdown" class="mb-3" style="display: none;">
-                        <div class="d-flex justify-content-between text-muted small mb-1">
-                            <span>Alapdíj (<span id="checkout_breakdown_guests">0</span> fő):</span>
+                        <div class="fc-breakdown-row text-muted small mb-1" id="checkout_breakdown_adults_row">
+                            <span>Felnőtt (<span id="checkout_breakdown_guests">0</span> fő):</span>
                             <span><span id="checkout_breakdown_base">0</span> Ft</span>
                         </div>
-                        <div class="d-flex justify-content-between text-muted small mb-1" id="checkout_breakdown_companions_row">
+                        <div class="fc-breakdown-row text-muted small mb-1" id="checkout_breakdown_children_row">
+                            <span>Gyerek, kedvezményes (<span id="checkout_breakdown_children_count">0</span> fő):</span>
+                            <span><span id="checkout_breakdown_children">0</span> Ft</span>
+                        </div>
+                        <div class="fc-breakdown-row text-muted small mb-1" id="checkout_breakdown_companions_row">
                             <span>Kísérő díj (<span id="checkout_breakdown_companions_count">0</span> fő):</span>
                             <span><span id="checkout_breakdown_companions">0</span> Ft</span>
                         </div>
+                        <div class="fc-min-note" id="checkout_min_note" style="display: none;"></div>
                         <hr class="my-2">
                     </div>
 
-                    <div class="alert alert-info mb-4">
-                        <div class="h4 mb-1">Fizetendő összeg:</div>
-                        <div class="display-4 font-weight-bold text-danger">
+                    <div class="fc-amount-box">
+                        <div class="fc-amount-label">Fizetendő összeg</div>
+                        <div class="fc-amount-value">
                             <span id="checkout_amount">0</span> Ft
                         </div>
-                        <small class="text-muted" id="checkout_duration"></small>
+                        <small class="fc-amount-sub" id="checkout_duration"></small>
                     </div>
 
                     <div class="form-group">
@@ -389,7 +365,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
-                    <button type="submit" class="btn btn-success btn-lg">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-check mr-1"></i> Fizetés Lezárása
                     </button>
                 </div>
@@ -411,17 +387,29 @@
                 <input type="hidden" name="entry_id" id="partial_entry_id">
                 <div class="modal-body">
                     <p>Összesen <strong id="partial_total_guests">0</strong> fő tartózkodik bent.</p>
-                    <div class="form-group">
-                        <label for="partial_leaving_count">Hányan távoznak?</label>
-                        <input type="number" id="partial_leaving_count" class="form-control form-control-lg"
-                               value="1" min="1" max="1">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="partial_leaving_count">Hányan távoznak?</label>
+                                <input type="number" id="partial_leaving_count" class="form-control form-control-lg"
+                                       value="1" min="1" max="1">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="partial_leaving_children">Ebből gyerek</label>
+                                <input type="number" id="partial_leaving_children" class="form-control form-control-lg"
+                                       value="0" min="0" max="0">
+                                <small class="form-text text-muted">Bent lévő gyerek: <span id="partial_total_children">0</span></small>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="partial_payment_details" style="display: none;">
                         <hr>
-                        <div class="alert alert-info mb-4">
-                            <div class="h4 mb-1">Fizetendő összeg:</div>
-                            <div class="display-4 font-weight-bold text-danger">
+                        <div class="fc-amount-box">
+                            <div class="fc-amount-label">Fizetendő összeg</div>
+                            <div class="fc-amount-value">
                                 <span id="partial_checkout_amount">0</span> Ft
                             </div>
                         </div>
@@ -459,7 +447,7 @@
                     <button type="button" id="partial_calc_btn" class="btn btn-info">
                         <i class="fas fa-calculator mr-1"></i> Összeg számítása
                     </button>
-                    <button type="submit" id="partial_confirm_btn" class="btn btn-warning" style="display: none;">
+                    <button type="submit" id="partial_confirm_btn" class="btn btn-success" style="display: none;">
                         <i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés
                     </button>
                 </div>
@@ -470,33 +458,7 @@
 
 @push('scripts')
     <script src="/plugins/qrcode-scanner/html5-qrcode.min.js"></script>
-    <script src="{{ asset('packages/flip-city/js/admin/flip-city.js') }}"></script>
-    <script>
-        $(document).ready(function() {
-            // Manuális beléptetés gomb kezelése (a listákból)
-            $(document).on('click', '.checkin-manual-btn', function() {
-                var id = $(this).data('id');
-                var name = $(this).data('name');
-                var guests = $(this).data('guests') || 1;
-                var bookingId = $(this).data('booking-id') || '';
-                
-                $('#checkin_user_id').val(id);
-                $('#checkin_user_name').text(name);
-                $('#checkin_guest_count').val(guests);
-                $('#checkin_booking_id').val(bookingId);
-                $('#checkin_companions_count').val(0);
-
-                if (bookingId) {
-                    $('#checkin_manual_form').attr('action', '{{ route("flip-city.admin.entries.store-from-booking") }}');
-                } else {
-                    $('#checkin_manual_form').attr('action', '{{ route("flip-city.admin.entries.store-manual") }}');
-                }
-
-                $('#checkinManualModal').modal('show');
-            });
-        });
-    </script>
+    <script src="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/js/admin/flip-city.js') }}"></script>
 @endpush
-{{--<script src="/js/qr-code-scanner.js"></script>--}}
-<link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
+<link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/admin/flip-city.css') }}">
 @endsection

@@ -156,6 +156,11 @@ class DashboardController extends FlipCityAdminController
         $validated = $request->validate([
             'default_rate' => 'required|numeric|min:0',
             'companion_price' => 'required|numeric|min:0',
+            'child_rate' => 'required|numeric|min:0',
+            'child_age_limit' => 'required|integer|min:1|max:18',
+            'min_minutes' => 'required|integer|min:0|max:600',
+            'booking_from' => 'required|date_format:H:i',
+            'booking_until' => 'required|date_format:H:i|after:booking_from',
             'profile_qr_print_text' => 'nullable|string',
             'show_profile_booking' => 'required|boolean',
         ]);

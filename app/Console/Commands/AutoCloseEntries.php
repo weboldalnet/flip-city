@@ -18,9 +18,9 @@ class AutoCloseEntries extends Command
             ->get();
 
         foreach ($entries as $entry) {
-            $entry->end_time = $entry->start_time->addHours($limitHours);
+            $entry->end_time = $entry->start_time->copy()->addHours($limitHours);
             $entry->is_auto_closed = true;
-            $entry->total_cost = $limitHours * $entry->rate * $entry->guest_count;
+            $entry->total_cost = $entry->costBreakdown($entry->end_time)['total'];
             $entry->save();
 
             $this->info("Automatikusan lezárva: Entry #{$entry->id}");

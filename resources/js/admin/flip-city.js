@@ -4,6 +4,7 @@ $(document).ready(function () {
     var currentPartialEntryId = null;
     var html5QrCode = null;
     var timerPaused = false;
+    var scanLocked = false;
     
     // -------------------------------------------------------
     // QR Beolvasó Modal és Kamera
@@ -11,8 +12,7 @@ $(document).ready(function () {
     $('#scanQrModal').on('shown.bs.modal', function () {
         $('#qr_token_input').val('').focus();
         $('#qr_result').html('');
-        $('#qr_guest_count_wrap').addClass('d-none');
-        startCamera();
+startCamera();
         timerPaused = true;
     });
 
@@ -29,10 +29,18 @@ $(document).ready(function () {
 
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-        html5QrCode.start({ facingMode: "environment" }, config, (decodedText, decodedResult) => {
+        if (html5QrCode.isScanning) {
+            return;
+        }
+
+        scanLocked = false;
+        html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+            if (scanLocked) {
+                return;
+            }
+            scanLocked = true;
             $('#qr_token_input').val(decodedText);
-            triggerScan();
-            stopCamera(); // Megállítjuk az első sikeres olvasás után
+            stopCamera().then(triggerScan);
         }).catch((err) => {
             console.error("Hiba a kamera indításakor: ", err);
             $('#qr_result').html('<div class="alert alert-warning small">Nem sikerült elérni a kamerát. Használja a manuális bevitelt.</div>');
@@ -41,11 +49,17 @@ $(document).ready(function () {
 
     function stopCamera() {
         if (html5QrCode && html5QrCode.isScanning) {
-            html5QrCode.stop().then((ignore) => {
-                // Stopped
-            }).catch((err) => {
+            return html5QrCode.stop().catch((err) => {
                 console.error("Hiba a kamera leállításakor: ", err);
             });
+        }
+
+        return Promise.resolve();
+    }
+
+    function restartCameraAfterFailure() {
+        if ($('#scanQrModal').hasClass('show')) {
+            startCamera();
         }
     }
 
@@ -81,46 +95,57 @@ $(document).ready(function () {
                     if (response.action === 'checkout') {
                         $('#qr_result').html('<div class="alert alert-info"><i class="fas fa-info-circle mr-1"></i>' + response.message + '</div>');
                         setTimeout(function () {
-                            $('#scanQrModal').modal('hide');
-                            openCheckout(response.entry_id);
+                            $('#scanQrModal').one('hidden.bs.modal', function () {
+                                openCheckout(response.entry_id);
+                            }).modal('hide');
                         }, 800);
                     } else if (response.action === 'confirm_checkin') {
                         showCheckinConfirmation(response);
                     }
                 } else {
-                    $('#qr_result').html('<div class="alert alert-danger"><i class="fas fa-times-circle mr-1"></i>' + response.message + '</div>');
+                    $('#qr_result').html('<div class="alert alert-danger"><i class="fas fa-times-circle mr-1"></i>' + escapeHtml(response.message) + '</div>');
+                    restartCameraAfterFailure();
                 }
             },
-            error: function () {
-                $('#qr_result').html('<div class="alert alert-danger">Hiba történt a feldolgozás során!</div>');
+            error: function (xhr) {
+                $('#qr_result').html('<div class="alert alert-danger">' + escapeHtml(errorMessage(xhr, 'Hiba történt a feldolgozás során!')) + '</div>');
+                restartCameraAfterFailure();
             }
         });
     }
 
     function showCheckinConfirmation(data) {
+        var childAgeLimit = $('#dashboard_data').data('child-age') || 6;
         var user = data.user;
         var booking = data.booking;
-        var guestCount = booking ? booking.guest_count : 1;
+        var guestCount = booking ? (parseInt(booking.guest_count) || 1) : 1;
 
         var html = '<div class="card bg-light border-primary mt-3">' +
             '<div class="card-body">' +
-            '<h6 class="card-title font-weight-bold text-primary mb-3"><i class="fas fa-user-check mr-2"></i>' + user.name + '</h6>' +
-            (booking ? '<div class="alert alert-success small py-2 mb-3"><i class="fas fa-calendar-check mr-1"></i>Találtunk mai foglalást (' + booking.guest_count + ' fő)!</div>' : '') +
+            '<h6 class="card-title font-weight-bold text-primary mb-3"><i class="fas fa-user-check mr-2"></i>' + escapeHtml(user.name) + '</h6>' +
+            (booking ? '<div class="alert alert-success small py-2 mb-3"><i class="fas fa-calendar-check mr-1"></i>Találtunk mai foglalást (' + guestCount + ' fő)!</div>' : '') +
             '<div class="row">' +
-            '<div class="col-md-6">' +
+            '<div class="col-sm-4">' +
             '<div class="form-group mb-3">' +
-            '<label class="small font-weight-bold">Fő (játszó):</label>' +
+            '<label class="small font-weight-bold" for="final_guest_count">Játszók (fő):</label>' +
             '<input type="number" id="final_guest_count" class="form-control" value="' + guestCount + '" min="1" max="50">' +
             '</div>' +
             '</div>' +
-            '<div class="col-md-6">' +
+            '<div class="col-sm-4">' +
             '<div class="form-group mb-3">' +
-            '<label class="small font-weight-bold">Kis. (kísérő):</label>' +
+            '<label class="small font-weight-bold" for="final_children_count">Ebből gyerek:</label>' +
+            '<input type="number" id="final_children_count" class="form-control" value="0" min="0" max="50">' +
+            '<small class="form-text">' + childAgeLimit + ' év alatt, kedvezményes</small>' +
+            '</div>' +
+            '</div>' +
+            '<div class="col-sm-4">' +
+            '<div class="form-group mb-3">' +
+            '<label class="small font-weight-bold" for="final_companions_count">Kísérő (fő):</label>' +
             '<input type="number" id="final_companions_count" class="form-control" value="0" min="0" max="50">' +
             '</div>' +
             '</div>' +
             '</div>' +
-            '<button type="button" id="confirm_checkin_btn" class="btn btn-primary btn-block" data-token="' + user.qr_code_token + '">' +
+            '<button type="button" id="confirm_checkin_btn" class="btn btn-primary btn-block" data-token="' + escapeHtml(user.qr_code_token) + '">' +
             '<i class="fas fa-sign-in-alt mr-1"></i> Beléptetés indítása' +
             '</button>' +
             '</div>' +
@@ -144,21 +169,24 @@ $(document).ready(function () {
                     _token: csrfToken,
                     qr_code_token: token,
                     guest_count: count,
+                    children_count: $('#final_children_count').val() || 0,
                     companions_count: companionsVal
                 },
                 success: function (res) {
                     if (res.success) {
-                        $('#qr_result').html('<div class="alert alert-success mt-3"><i class="fas fa-check-circle mr-1"></i>' + res.message + '</div>');
+                        $('#qr_result').html('<div class="alert alert-success mt-3"><i class="fas fa-check-circle mr-1"></i>' + escapeHtml(res.message) + '</div>');
                         setTimeout(function () {
                             location.reload();
                         }, 1000);
                     } else {
-                        $('#qr_result').html('<div class="alert alert-danger mt-3">' + res.message + '</div>');
+                        $('#qr_result').find('.alert-danger').remove();
+                        $('#qr_result').append('<div class="alert alert-danger mt-3">' + escapeHtml(res.message) + '</div>');
                         $('#confirm_checkin_btn').prop('disabled', false).text('Beléptetés indítása');
                     }
                 },
-                error: function () {
-                    alert('Hiba történt a beléptetés során!');
+                error: function (xhr) {
+                    $('#qr_result').find('.alert-danger').remove();
+                    $('#qr_result').append('<div class="alert alert-danger mt-3">' + escapeHtml(errorMessage(xhr, 'Hiba történt a beléptetés során!')) + '</div>');
                     $('#confirm_checkin_btn').prop('disabled', false).text('Beléptetés indítása');
                 }
             });
@@ -169,6 +197,20 @@ $(document).ready(function () {
     // (csak ha nem checkout)
     $('#qr_token_input').on('input', function () {
         $('#qr_result').html('');
+    });
+
+    $(document).on('click', '.checkin-manual-btn', function () {
+        var $form = $('#checkin_manual_form');
+        var bookingId = $(this).data('booking-id') || '';
+
+        $('#checkin_user_id').val($(this).data('id'));
+        $('#checkin_user_name').text($(this).data('name'));
+        $('#checkin_guest_count').val($(this).data('guests') || 1);
+        $('#checkin_booking_id').val(bookingId);
+        $('#checkin_children_count').val(0);
+        $('#checkin_companions_count').val(0);
+        $form.attr('action', bookingId ? $form.data('booking-url') : $form.data('manual-url'));
+        $('#checkinManualModal').modal('show');
     });
 
     // -------------------------------------------------------
@@ -209,25 +251,34 @@ $(document).ready(function () {
 
                     // Breakdown adatok
                     var compCount = parseInt(response.companions_count) || 0;
-                    if (compCount > 0) {
-                        $('#checkout_details_breakdown').show();
-                        $('#checkout_breakdown_guests').text(guests);
-                        $('#checkout_breakdown_base').text(numberFormat(response.base_cost));
-                        $('#checkout_breakdown_companions_count').text(compCount);
-                        $('#checkout_breakdown_companions').text(numberFormat(response.companions_cost));
+                    var childCount = parseInt(response.children) || 0;
+                    $('#checkout_details_breakdown').show();
+                    $('#checkout_breakdown_guests').text(response.adults);
+                    $('#checkout_breakdown_base').text(numberFormat(response.adult_cost));
+                    $('#checkout_breakdown_adults_row').toggle(parseInt(response.adults) > 0);
+                    $('#checkout_breakdown_children_count').text(childCount);
+                    $('#checkout_breakdown_children').text(numberFormat(response.child_cost));
+                    $('#checkout_breakdown_children_row').toggle(childCount > 0);
+                    $('#checkout_breakdown_companions_count').text(compCount);
+                    $('#checkout_breakdown_companions').text(numberFormat(response.companions_cost));
+                    $('#checkout_breakdown_companions_row').toggle(compCount > 0);
+                    if (response.min_applied) {
+                        $('#checkout_min_note').text('Bent töltött idő: ' + duration + ' perc, a minimum ' + response.min_minutes + ' perc díja került felszámításra fejenként.').show();
                     } else {
-                        $('#checkout_details_breakdown').hide();
+                        $('#checkout_min_note').hide();
                     }
 
                     $('#checkout_amount').text(numberFormat(amount));
                     $('#checkout_duration').text(duration + ' perc, ' + guests + ' fő');
                     $('#checkoutModal').modal('show');
                 } else {
-                    alert('Hiba: nem sikerült az összeget lekérdezni.');
+                    timerPaused = false;
+                    alert(response.message || 'Hiba: nem sikerült az összeget lekérdezni.');
                 }
             },
-            error: function () {
-                alert('Szerverhiba a kiléptetés során!');
+            error: function (xhr) {
+                timerPaused = false;
+                alert(errorMessage(xhr, 'Szerverhiba a kiléptetés során!'));
             }
         });
     }
@@ -292,8 +343,8 @@ $(document).ready(function () {
                     $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés Lezárása');
                 }
             },
-            error: function () {
-                alert('Szerverhiba a fizetés során!');
+            error: function (xhr) {
+                alert(errorMessage(xhr, 'Szerverhiba a fizetés során!'));
                 $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés Lezárása');
             }
         });
@@ -306,7 +357,10 @@ $(document).ready(function () {
         timerPaused = true;
         var entryId = $(this).data('id');
         var max = parseInt($(this).data('max'));
+        var children = parseInt($(this).data('children')) || 0;
         currentPartialEntryId = entryId;
+        $('#partial_total_children').text(children);
+        $('#partial_leaving_children').attr('max', children).val(0).prop('disabled', children === 0);
 
         $('#partial_entry_id').val(entryId);
         $('#partial_total_guests').text(max);
@@ -347,10 +401,11 @@ $(document).ready(function () {
         $.ajax({
             url: '/flip-city/entries/' + currentPartialEntryId + '/checkout',
             method: 'POST',
-            data: { 
+            data: {
                 _token: csrfToken,
                 partial: true,
-                leaving_count: leavingCount
+                leaving_count: leavingCount,
+                leaving_children: parseInt($('#partial_leaving_children').val()) || 0
             },
             success: function (response) {
                 $btn.prop('disabled', false).html('<i class="fas fa-calculator mr-1"></i> Összeg számítása');
@@ -360,14 +415,15 @@ $(document).ready(function () {
                     $('#partial_calc_btn').hide();
                     $('#partial_confirm_btn').show();
                     $('#partial_leaving_count').prop('disabled', true);
+                    $('#partial_leaving_children').prop('disabled', true);
                     $('#partial_result').html('');
                 } else {
-                    $('#partial_result').html('<div class="alert alert-danger">' + (response.message || 'Hiba!') + '</div>');
+                    $('#partial_result').html('<div class="alert alert-danger">' + escapeHtml(response.message || 'Hiba!') + '</div>');
                 }
             },
-            error: function () {
+            error: function (xhr) {
                 $btn.prop('disabled', false).html('<i class="fas fa-calculator mr-1"></i> Összeg számítása');
-                alert('Hiba az összeg lekérdezésekor!');
+                $('#partial_result').html('<div class="alert alert-danger">' + escapeHtml(errorMessage(xhr, 'Hiba az összeg lekérdezésekor!')) + '</div>');
             }
         });
     });
@@ -412,8 +468,10 @@ $(document).ready(function () {
             data: {
                 _token: csrfToken,
                 leaving_count: leavingCount,
+                leaving_children: parseInt($('#partial_leaving_children').val()) || 0,
                 payment_method: paymentMethod,
-                cash_received: cashReceived || null
+                cash_received: cashReceived || null,
+                final_cost: amount
             },
             success: function (response) {
                 if (response.success) {
@@ -425,16 +483,24 @@ $(document).ready(function () {
                     alert(msg);
                     location.reload();
                 } else {
-                    $('#partial_result').html('<div class="alert alert-danger">' + (response.message || 'Hiba!') + '</div>');
-                    $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés');
+                    resetPartialForm($btn);
+                    $('#partial_result').html('<div class="alert alert-danger">' + escapeHtml(response.message || 'Hiba!') + '</div>');
                 }
             },
-            error: function () {
-                alert('Szerverhiba a részleges fizetés során!');
-                $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés');
+            error: function (xhr) {
+                resetPartialForm($btn);
+                $('#partial_result').html('<div class="alert alert-danger">' + escapeHtml(errorMessage(xhr, 'Szerverhiba a részleges fizetés során!')) + '</div>');
             }
         });
     });
+
+    function resetPartialForm($btn) {
+        $btn.prop('disabled', false).html('<i class="fas fa-check mr-1"></i> Fizetés és Kiléptetés').hide();
+        $('#partial_payment_details').hide();
+        $('#partial_calc_btn').show();
+        $('#partial_leaving_count').prop('disabled', false);
+        $('#partial_leaving_children').prop('disabled', (parseInt($('#partial_total_children').text()) || 0) === 0);
+    }
 
     // -------------------------------------------------------
     // Eltelt idő frissítése (live)
@@ -459,12 +525,19 @@ $(document).ready(function () {
             // Várható díj frissítése
             var $row = $(this).closest('tr');
             var rate = parseFloat($row.data('rate'));
-            var guestCount = parseInt($row.find('.guest-count').text()) || 1;
-            var companionsCount = parseInt($row.find('.companions-count').text()) || 0;
+            var childRate = parseFloat($row.data('child-rate'));
+            if (isNaN(childRate)) childRate = rate;
+            var guestCount = parseInt($row.data('guests')) || 1;
+            var childCount = parseInt($row.data('children')) || 0;
+            var companionsCount = parseInt($row.data('companions')) || 0;
             var companionPrice = parseFloat($('#dashboard_data').data('companion-price')) || 0;
+            var minMinutes = parseInt($('#dashboard_data').data('min-minutes')) || 0;
+            var billed = Math.max(diffMins, minMinutes);
 
             if (rate && $row.find('.expected-fee').length) {
-                var fee = Math.round((diffMins / 60) * rate * guestCount) + (companionsCount * companionPrice);
+                var fee = Math.round((billed / 60) * rate * (guestCount - childCount))
+                    + Math.round((billed / 60) * childRate * childCount)
+                    + (companionsCount * companionPrice);
                 $row.find('.expected-fee').text(numberFormat(fee) + ' Ft');
             }
         });
@@ -476,6 +549,21 @@ $(document).ready(function () {
     // -------------------------------------------------------
     // Segédfüggvények
     // -------------------------------------------------------
+    function escapeHtml(text) {
+        return $('<div>').text(text == null ? '' : String(text)).html().replace(/"/g, '&quot;');
+    }
+
+    function errorMessage(xhr, fallback) {
+        var json = xhr && xhr.responseJSON;
+        if (json && json.errors) {
+            return json.errors[Object.keys(json.errors)[0]][0];
+        }
+        if (xhr && xhr.status === 419) {
+            return 'Lejárt a munkamenet, frissítsd az oldalt.';
+        }
+        return (json && json.message) || fallback;
+    }
+
     function numberFormat(num) {
         return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }

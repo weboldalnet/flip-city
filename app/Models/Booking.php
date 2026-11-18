@@ -29,6 +29,24 @@ class Booking extends Model
         'guest_count', 'qr_code_token', 'status', 'comments'
     ];
 
+    public function getStatusLabelAttribute(): string
+    {
+        return [
+            'pending' => 'Függőben',
+            'confirmed' => 'Visszaigazolt',
+            'cancelled' => 'Lemondva',
+        ][$this->status] ?? $this->status;
+    }
+
+    public function getStatusClassAttribute(): string
+    {
+        return [
+            'pending' => 'warning',
+            'confirmed' => 'success',
+            'cancelled' => 'danger',
+        ][$this->status] ?? 'secondary';
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

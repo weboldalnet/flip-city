@@ -12,9 +12,14 @@ class FlipCityServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->mergeConfigFrom(__DIR__."/../config/flip-city.php", "flip-city");
+        $this->app["router"]->aliasMiddleware("flip-city.auth", \Weboldalnet\FlipCity\Http\Middleware\Authenticate::class);
         $this->loadRoutesFrom(__DIR__."/../routes/web.php");
         $this->loadViewsFrom(__DIR__."/../resources/views", "flip-city");
         $this->loadMigrationsFrom(__DIR__."/../database/migrations");
+
+        $this->callAfterResolving(\Illuminate\Console\Scheduling\Schedule::class, function ($schedule) {
+            $schedule->command("flip-city:auto-close")->everyFiveMinutes()->withoutOverlapping();
+        });
 
         $this->publishes([
             __DIR__."/../config/flip-city.php" => config_path("flip-city.php"),
@@ -37,6 +42,11 @@ class FlipCityServiceProvider extends ServiceProvider
             $flipCitySettings = [
                 'default_rate' => FlipCitySettings::get('default_rate', config('flip-city.default_rate', 1500)),
                 'companion_price' => FlipCitySettings::get('companion_price', config('flip-city.companion_price', 500)),
+                'child_rate' => FlipCitySettings::get('child_rate', config('flip-city.child_rate') ?? FlipCitySettings::get('default_rate', config('flip-city.default_rate', 1500))),
+                'child_age_limit' => FlipCitySettings::get('child_age_limit', config('flip-city.child_age_limit', 6)),
+                'min_minutes' => FlipCitySettings::get('min_minutes', config('flip-city.min_minutes', 0)),
+                'booking_from' => FlipCitySettings::get('booking_from', config('flip-city.booking_from', '08:00')),
+                'booking_until' => FlipCitySettings::get('booking_until', config('flip-city.booking_until', '16:00')),
                 'profile_qr_print_text' => FlipCitySettings::get('profile_qr_print_text', config('flip-city.profile_qr_print_text', 'Kérjük, mutassa be ezt a kódot a belépéshez!')),
                 'show_profile_booking' => FlipCitySettings::get('show_profile_booking', config('flip-city.show_profile_booking', true)),
                 'billing_enabled' => config('flip-city.billing_enabled', true),

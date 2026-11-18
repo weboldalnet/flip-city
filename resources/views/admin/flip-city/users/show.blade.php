@@ -9,7 +9,6 @@
             <i class="fas fa-user mr-2 text-primary"></i>{{ $user->name }}
         </h1>
         <div>
-            @php $activeEntry = \Weboldalnet\FlipCity\Models\Entry::where('user_id', $user->id)->whereNull('end_time')->first(); @endphp
             @if(!$activeEntry && $user->is_active && !$user->is_blocked)
                 <button type="button" class="btn btn-sm btn-success shadow-sm mr-1" data-toggle="modal" data-target="#checkinManualModal">
                     <i class="fas fa-sign-in-alt fa-sm mr-1"></i> Beléptetés
@@ -24,13 +23,13 @@
         </div>
     </div>
 
-    @if(session('success'))
+    @if(session('success') && !session('wn_toast'))
         <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
         </div>
     @endif
-    @if(session('error'))
+    @if(session('error') && !session('wn_toast'))
         <div class="alert alert-danger alert-dismissible fade show">
             {{ session('error') }}
             <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
@@ -40,7 +39,7 @@
     <div class="row">
         <!-- Alapadatok -->
         <div class="col-xl-4 col-lg-5 mb-4">
-            <div class="card shadow h-100">
+            <div class="card shadow">
                 <div class="card-header py-3 d-flex align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Alapadatok</h6>
                     <div>
@@ -174,9 +173,11 @@
                                     <th>Belépés</th>
                                     <th>Kilépés</th>
                                     <th class="text-center">Fő</th>
+                                    <th class="text-center">Gyerek</th>
+                                    <th class="text-center">Kísérő</th>
                                     <th class="text-right">Díj</th>
                                     <th class="text-right">Összeg</th>
-                                    <th></th>
+                                    <th>Művelet</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -196,8 +197,15 @@
                                             <span class="badge badge-success fs-14 ">Aktív</span>
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ $entry->guest_count }}</td>
-                                    <td class="text-right small">{{ number_format($entry->rate, 0, ',', ' ') }} Ft/h</td>
+                                    <td class="text-center">{{ $entry->guest_count - $entry->children_count }}</td>
+                                    <td class="text-center">{{ $entry->children_count }}</td>
+                                    <td class="text-center">{{ $entry->companions_count }}</td>
+                                    <td class="text-right small">
+                                        {{ number_format($entry->rate, 0, ',', ' ') }} Ft/h
+                                        @if($entry->children_count > 0)
+                                            <span class="fc-sub">gyerek: {{ number_format($entry->child_rate ?? $entry->rate, 0, ',', ' ') }} Ft/h</span>
+                                        @endif
+                                    </td>
                                     <td class="text-right font-weight-bold">
                                         @if($entry->total_cost !== null)
                                             {{ number_format($entry->total_cost, 0, ',', ' ') }} Ft
@@ -210,15 +218,15 @@
                                         @if(!$entry->end_time)
                                         <form action="{{ route('flip-city.admin.entries.fail', $entry->id) }}" class="mb-0" method="POST" onsubmit="return confirm('Biztosan meghiúsulttá teszi ezt a belépést?')">
                                             @csrf
-                                            <button type="submit" class="btn btn-xs btn-outline-danger" title="Meghiúsult belépés">
-                                                <i class="fas fa-times-circle"></i> Meghiúsult
+                                            <button type="submit" class="fc-act fc-act-danger" title="Meghiúsult belépés">
+                                                <i class="fas fa-times-circle"></i><span>Meghiúsult</span>
                                             </button>
                                         </form>
                                         @elseif($entry->is_failed)
                                         <form action="{{ route('flip-city.admin.entries.unfail', $entry->id) }}" class="mb-0" method="POST" onsubmit="return confirm('Biztosan visszaállítja ezt a belépést?')">
                                             @csrf
-                                            <button type="submit" class="btn btn-xs btn-outline-success" title="Visszaállítás">
-                                                <i class="fas fa-undo"></i> Visszaállít
+                                            <button type="submit" class="fc-act fc-act-ok" title="Visszaállítás">
+                                                <i class="fas fa-undo"></i><span>Visszaállít</span>
                                             </button>
                                         </form>
                                         @endif
@@ -226,7 +234,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-3">Nincs belépési előzmény.</td>
+                                    <td colspan="8" class="text-center text-muted py-3">Nincs belépési előzmény.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -235,7 +243,7 @@
                 </div>
             </div>
 
-            <!-- Foglalások -->
+            @if($flipCitySettings['show_profile_booking'])
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
@@ -283,6 +291,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Számlák -->
             @if(config('flip-city.billing_enabled', true))
@@ -315,7 +324,7 @@
                                     </td>
                                     <td class="text-center">
                                         @if($invoice->invoice_url)
-                                            <a href="{{ $invoice->invoice_url }}" target="_blank" class="btn btn-xs btn-outline-primary">
+                                            <a href="{{ $invoice->invoice_url }}" target="_blank" class="fc-act" title="Számla megnyitása" aria-label="Számla megnyitása">
                                                 <i class="fas fa-external-link-alt"></i>
                                             </a>
                                         @else
@@ -364,9 +373,6 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
-@endsection
-
 <!-- Manuális beléptetés Modal -->
 <div class="modal fade" id="checkinManualModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -381,15 +387,7 @@
                 @csrf
                 <input type="hidden" name="user_id" value="{{ $user->id }}">
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="guest_count_show">Vendégek száma (fő)</label>
-                        <input type="number" name="guest_count" id="guest_count_show" class="form-control" value="1" min="1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="companions_count_show">Kísérők száma (Kis.)</label>
-                        <input type="number" name="companions_count" id="companions_count_show" class="form-control" value="0" min="0">
-                        <small class="form-text text-muted">A kísérők után egyszeri díj kerül felszámításra.</small>
-                    </div>
+                    @include('flip-city::admin.flip-city.partials.checkin-counts', ['prefix' => 'show'])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Mégse</button>
@@ -399,3 +397,6 @@
         </div>
     </div>
 </div>
+
+<link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/admin/flip-city.css') }}">
+@endsection

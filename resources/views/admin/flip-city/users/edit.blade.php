@@ -1,6 +1,7 @@
 @extends("admin.layouts.layout")
 
 @section('title', 'Szerkesztés: ' . $user->name . ' - Flip-City')
+@section('wnSajatHibalista', '1')
 
 @section("content")
 <div class="container-fluid flip-city-admin">
@@ -277,5 +278,5 @@
     </div>
 </div>
 
-<link rel="stylesheet" href="{{ asset('packages/flip-city/css/admin/flip-city.css') }}">
+<link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/admin/flip-city.css') }}">
 @endsection

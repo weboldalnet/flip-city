@@ -5,14 +5,15 @@
 
 @section('extendCSS')
     @if($flipCitySettings['css_published'])
-        <link rel="stylesheet" href="{{ asset('packages/flip-city/css/site/flip-city.css') }}">
+        <link rel="stylesheet" href="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/css/site/flip-city.css') }}">
     @endif
 @endsection
 
 @section('content')
 <div class="flipcity flipcity-profile">
     <div class="container py-5">
-        <div class="row">
+        @include('flip-city::site.flip-city.partials.flash')
+<div class="row">
             <div class="col-md-4 mx-auto">
                 <div class="card shadow mb-4">
                     <div class="card-body text-center">
@@ -38,7 +39,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-8 @if($flipCitySettings['show_profile_booking'] || $activeEntries->isNotEmpty() || $upcomingBookings->isNotEmpty()) @else d-none @endif">
+            <div class="col-md-8 @if($flipCitySettings['show_profile_booking'] || $activeEntries->isNotEmpty()) @else d-none @endif">
                 @if($activeEntries->isNotEmpty())
                 <div class="card shadow mt-4 border-warning">
                     <div class="card-header bg-warning text-dark">
@@ -49,33 +50,23 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th>Kezdés</th>
-                                    <th>Létszám</th>
-                                    <th>Kis.</th>
+                                    <th class="text-center">Fő</th>
+                                    <th class="text-center">Gyerek</th>
+                                    <th class="text-center">Kísérő</th>
                                     <th>Eltelt idő</th>
                                     <th class="text-right">Várható díj</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($activeEntries as $entry)
-                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}" data-companions="{{ $entry->companions_count }}" data-companion-price="{{ $flipCitySettings['companion_price'] }}">
+                                @php($fcCost = $entry->costBreakdown())
+                                <tr data-id="{{ $entry->id }}" data-rate="{{ $entry->rate }}" data-child-rate="{{ $fcCost['child_rate'] }}" data-guests="{{ $entry->guest_count }}" data-children="{{ $entry->children_count }}" data-companions="{{ $entry->companions_count }}" data-companion-price="{{ $fcCost['companion_price'] }}" data-min-minutes="{{ $fcCost['min_minutes'] }}">
                                     <td>{{ $entry->start_time->format('H:i') }}</td>
-                                    <td class="guest-count">{{ $entry->guest_count }} fő</td>
-                                    <td class="companions-count">{{ $entry->companions_count }} fő</td>
-                                    <td class="elapsed-time" data-start="{{ $entry->start_time->toISOString() }}">
-                                        @php
-                                            $diffInSeconds = $entry->start_time->diffInSeconds(now());
-                                            $durationMinutes = ceil($diffInSeconds / 60);
-                                            if ($durationMinutes < 1) $durationMinutes = 1;
-                                        @endphp
-                                        {{ $durationMinutes }} perc
-                                    </td>
-                                    <td class="text-right text-warning font-weight-bold expected-fee">
-                                        @php
-                                            $baseCost = round(($durationMinutes / 60) * $entry->rate * $entry->guest_count);
-                                            $companionsCost = $entry->companions_count * $flipCitySettings['companion_price'];
-                                        @endphp
-                                        {{ number_format($baseCost + $companionsCost, 0, ',', ' ') }} Ft
-                                    </td>
+                                    <td class="text-center guest-count">{{ $entry->guest_count - $entry->children_count }}</td>
+                                    <td class="text-center children-count">{{ $entry->children_count }}</td>
+                                    <td class="text-center companions-count">{{ $entry->companions_count }}</td>
+                                    <td class="elapsed-time" data-start="{{ $entry->start_time->toISOString() }}">{{ $fcCost['minutes'] }} perc</td>
+                                    <td class="text-right font-weight-bold expected-fee">{{ number_format($fcCost['total'], 0, ',', ' ') }} Ft</td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -84,7 +75,7 @@
                 </div>
                 @endif
 
-                @if($upcomingBookings->isNotEmpty())
+                @if($flipCitySettings['show_profile_booking'] && $upcomingBookings->isNotEmpty())
                 <div class="card shadow mt-4">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0"><i class="fas fa-calendar-check mr-2"></i>Közelgő Foglalásaid</h5>
@@ -106,8 +97,8 @@
                                     <td>{{ date('H:i', strtotime($booking->booking_time)) }}</td>
                                     <td>{{ $booking->guest_count }} fő</td>
                                     <td>
-                                        <span class="badge badge-{{ $booking->status === 'confirmed' ? 'success' : 'secondary' }}">
-                                            {{ $booking->status }}
+                                        <span class="badge badge-{{ $booking->status_class }}">
+                                            {{ $booking->status_label }}
                                         </span>
                                     </td>
                                 </tr>
@@ -130,25 +121,26 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Dátum</label>
-                                        <input type="date" name="booking_date" class="form-control" required min="{{ date('Y-m-d') }}">
+                                        <input type="date" name="booking_date" class="form-control" required min="{{ date('Y-m-d') }}" value="{{ old('booking_date') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Időpont</label>
-                                        <input type="time" name="booking_time" class="form-control" required>
+                                        <input type="time" name="booking_time" class="form-control" required min="{{ $flipCitySettings['booking_from'] }}" max="{{ $flipCitySettings['booking_until'] }}" value="{{ old('booking_time') }}">
+                                        <small class="form-text text-muted">{{ $flipCitySettings['booking_from'] }} és {{ $flipCitySettings['booking_until'] }} között</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Létszám</label>
-                                        <input type="number" name="guest_count" class="form-control" required min="1">
+                                        <input type="number" name="guest_count" class="form-control" required min="1" value="{{ old('guest_count') }}">
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label>Megjegyzés (opcionális)</label>
-                                        <textarea name="comments" class="form-control" rows="2"></textarea>
+                                        <textarea name="comments" class="form-control" rows="2">{{ old('comments') }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -213,6 +205,7 @@
 </div>
 
 <!-- Összes foglalás Modal -->
+@if($flipCitySettings['show_profile_booking'])
 <div class="modal fade" id="allBookingsModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -241,8 +234,8 @@
                                 <td>{{ date('H:i', strtotime($booking->booking_time)) }}</td>
                                 <td>{{ $booking->guest_count }} fő</td>
                                 <td>
-                                    <span class="badge badge-{{ $booking->status === 'confirmed' ? 'success' : 'secondary' }}">
-                                        {{ $booking->status }}
+                                    <span class="badge badge-{{ $booking->status_class }}">
+                                        {{ $booking->status_label }}
                                     </span>
                                 </td>
                                 <td><small>{{ $booking->comments ?? '-' }}</small></td>
@@ -262,6 +255,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- Számlák Modal -->
 <div class="modal fade" id="invoicesModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -291,8 +285,8 @@
                                 <td>{{ $invoice->invoice_number }}</td>
                                 <td class="text-right">{{ number_format($invoice->amount, 0, ',', ' ') }} Ft</td>
                                 <td class="text-center">
-                                    @if($invoice->invoice_url)
-                                        <a href="{{ $invoice->invoice_url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                    @if($invoice->invoice_number && Route::has('flip-city.invoices.download'))
+                                        <a href="{{ route('flip-city.invoices.download', $invoice) }}" target="_blank" class="btn btn-sm btn-outline-success">
                                             <i class="fas fa-file-pdf mr-1"></i> Megnyitás
                                         </a>
                                     @else
@@ -318,7 +312,7 @@
 
 @section('script')
     @if($flipCitySettings['js_published'])
-        <script src="{{ asset('packages/flip-city/js/site/flip-city.js') }}"></script>
+        <script src="{{ \App\Services\PublicResourcesService::versioned('/packages/flip-city/js/site/flip-city.js') }}"></script>
     @endif
 @endsection
 

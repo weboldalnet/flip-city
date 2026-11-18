@@ -34,7 +34,9 @@ class UserController extends FlipCityAdminController
             }
         }
 
-        $users = $query->withCount('entries')->orderBy('created_at', 'desc')->paginate(20);
+        $users = $query->withCount(['entries', 'entries as failed_entries_count' => function ($q) {
+            $q->where('is_failed', true);
+        }])->orderBy('created_at', 'desc')->paginate(20);
 
         return view('flip-city::admin.flip-city.users.index', compact('users'));
     }
@@ -44,8 +46,9 @@ class UserController extends FlipCityAdminController
         $entries = $user->entries()->orderBy('created_at', 'desc')->take(20)->get();
         $bookings = $user->bookings()->orderBy('created_at', 'desc')->take(10)->get();
         $invoices = $user->invoices()->orderBy('created_at', 'desc')->get();
+        $activeEntry = $user->entries()->whereNull('end_time')->first();
 
-        return view('flip-city::admin.flip-city.users.show', compact('user', 'entries', 'bookings', 'invoices'));
+        return view('flip-city::admin.flip-city.users.show', compact('user', 'entries', 'bookings', 'invoices', 'activeEntry'));
     }
 
     public function edit(User $user)
@@ -85,7 +88,11 @@ class UserController extends FlipCityAdminController
 
     public function toggleActive(User $user)
     {
-        $user->is_active = !$user->is_active;
+        if ($user->is_active && $user->entries()->whereNull('end_time')->exists()) {
+            return redirect()->back()->with('error', 'A felhasználó éppen bent van, ezért nem deaktiválható. Előbb léptesd ki.');
+        }
+
+$user->is_active = !$user->is_active;
         $user->save();
 
         $status = $user->is_active ? 'aktiválva' : 'deaktiválva';
@@ -95,6 +102,10 @@ class UserController extends FlipCityAdminController
 
     public function toggleBlocked(User $user)
     {
+        if (!$user->is_blocked && $user->entries()->whereNull('end_time')->exists()) {
+            return redirect()->back()->with('error', 'A felhasználó éppen bent van, ezért nem tiltható le. Előbb léptesd ki.');
+        }
+
         $user->is_blocked = !$user->is_blocked;
         $user->save();
 

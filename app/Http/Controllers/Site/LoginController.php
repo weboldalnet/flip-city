@@ -26,8 +26,10 @@ class LoginController extends SiteExtendedController
             if (!$user->is_active) {
                 Auth::logout();
                 return back()->withErrors([
-                    "email" => "A fiókja még nincs aktiválva. Kérjük, ellenőrizze e-mailjeit az aktiváláshoz.",
-                ]);
+                    "email" => $user->activated_at
+                        ? "A fiókja jelenleg nem aktív. Kérjük, keresse munkatársainkat."
+                        : "A fiókja még nincs aktiválva. Kérjük, ellenőrizze e-mailjeit az aktiváláshoz.",
+                ])->onlyInput("email");
             }
 
             if ($user->is_blocked) {
