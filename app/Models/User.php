@@ -69,4 +69,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(Invoice::class, 'user_id');
     }
+
+    public function ensureQrCode(): bool
+    {
+        if ($this->qr_code_token && $this->qr_code_svg) {
+            return false;
+        }
+
+        if (!$this->qr_code_token) {
+            $this->qr_code_token = \Illuminate\Support\Str::uuid()->toString();
+        }
+
+        $this->qr_code_svg = \Weboldalnet\FlipCity\Services\QRCodeService::generateQRCode($this->qr_code_token);
+
+        return true;
+    }
 }

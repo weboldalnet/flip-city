@@ -5,7 +5,6 @@ namespace Weboldalnet\FlipCity\Http\Controllers\Site;
 use App\Http\Controllers\Site\SiteExtendedController;
 use Weboldalnet\FlipCity\Models\Booking;
 use Weboldalnet\FlipCity\Models\FlipCitySettings;
-use Weboldalnet\FlipCity\Services\QRCodeService;
 
 class ProfileController extends SiteExtendedController
 {
@@ -15,9 +14,8 @@ class ProfileController extends SiteExtendedController
 
         // QR kód lekérése a modellből, vagy generálása ha hiányzik
         $qrCode = null;
-        if ($user && $user->qr_code_token) {
-            if (!$user->qr_code_svg) {
-                $user->qr_code_svg = QRCodeService::generateQRCode($user->qr_code_token);
+        if ($user) {
+            if ($user->ensureQrCode()) {
                 $user->save();
             }
             $qrCode = $user->qr_code_svg;
@@ -47,12 +45,10 @@ class ProfileController extends SiteExtendedController
         $user = auth()->user();
         if (!$user) abort(403);
 
-        $qrCode = $user->qr_code_svg;
-        if (!$qrCode && $user->qr_code_token) {
-            $qrCode = QRCodeService::generateQRCode($user->qr_code_token);
-            $user->qr_code_svg = $qrCode;
+        if ($user->ensureQrCode()) {
             $user->save();
         }
+        $qrCode = $user->qr_code_svg;
 
         $printText = FlipCitySettings::get('profile_qr_print_text', config('flip-city.profile_qr_print_text', 'Kérjük, mutassa be ezt a kódot a belépéshez!'));
 

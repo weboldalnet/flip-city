@@ -92,7 +92,10 @@ class UserController extends FlipCityAdminController
             return redirect()->back()->with('error', 'A felhasználó éppen bent van, ezért nem deaktiválható. Előbb léptesd ki.');
         }
 
-$user->is_active = !$user->is_active;
+        $user->is_active = !$user->is_active;
+        if ($user->is_active) {
+            $user->ensureQrCode();
+        }
         $user->save();
 
         $status = $user->is_active ? 'aktiválva' : 'deaktiválva';

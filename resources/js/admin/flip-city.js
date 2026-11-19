@@ -5,6 +5,7 @@ $(document).ready(function () {
     var html5QrCode = null;
     var timerPaused = false;
     var scanLocked = false;
+    var cameraUnavailable = false;
     
     // -------------------------------------------------------
     // QR Beolvasó Modal és Kamera
@@ -43,7 +44,10 @@ startCamera();
             stopCamera().then(triggerScan);
         }).catch((err) => {
             console.error("Hiba a kamera indításakor: ", err);
-            $('#qr_result').html('<div class="alert alert-warning small">Nem sikerült elérni a kamerát. Használja a manuális bevitelt.</div>');
+            cameraUnavailable = true;
+            if ($('#qr_result').is(':empty')) {
+                $('#qr_result').html('<div class="alert alert-warning small">Nem sikerült elérni a kamerát. Használja a manuális bevitelt.</div>');
+            }
         });
     }
 
@@ -58,7 +62,7 @@ startCamera();
     }
 
     function restartCameraAfterFailure() {
-        if ($('#scanQrModal').hasClass('show')) {
+        if ($('#scanQrModal').hasClass('show') && !cameraUnavailable) {
             startCamera();
         }
     }
