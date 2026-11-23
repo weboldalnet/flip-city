@@ -324,6 +324,8 @@ class EntryController extends FlipCityAdminController
             }
         }
 
+        $totalCostForLeaving = Entry::payableAmount((float) $totalCostForLeaving, $paymentMethod);
+
         $change = 0;
         if ($paymentMethod === 'cash') {
             if ($cashReceived < $totalCostForLeaving) {
@@ -410,17 +412,18 @@ class EntryController extends FlipCityAdminController
         // Fizetési adatok (alapértelmezett KP, mert admin felületen történik a visszaállítás)
         $paymentMethod = 'cash';
         $totalCost = $entry->total_cost ?: $entry->calculateCurrentCost();
+        $paidAmount = Entry::payableAmount((float) $totalCost, $paymentMethod);
 
         $newInvoice = null;
         if (config('flip-city.billing_enabled', true)) {
             try {
-                $invoiceResponse = \Weboldalnet\FlipCity\Services\InvoiceService::createInvoiceForEntry($entry, $totalCost);
+                $invoiceResponse = \Weboldalnet\FlipCity\Services\InvoiceService::createInvoiceForEntry($entry, $paidAmount);
 
                 if ($invoiceResponse && $invoiceResponse->isSuccess()) {
                     $newInvoice = \Weboldalnet\FlipCity\Models\Invoice::create([
                         'entry_id'       => $entry->id,
                         'user_id'        => $entry->user_id,
-                        'amount'         => $totalCost,
+                        'amount'         => $paidAmount,
                         'payment_method' => $paymentMethod,
                         'invoice_number' => $invoiceResponse->getDocumentNumber(),
                         'invoice_url'    => '',
@@ -438,7 +441,7 @@ class EntryController extends FlipCityAdminController
             \Weboldalnet\FlipCity\Models\Invoice::create([
                 'entry_id'       => $entry->id,
                 'user_id'        => $entry->user_id,
-                'amount'         => $totalCost,
+                'amount'         => $paidAmount,
                 'payment_method' => $paymentMethod,
                 'invoice_number' => null,
                 'invoice_url'    => null,
@@ -446,7 +449,7 @@ class EntryController extends FlipCityAdminController
         }
 
         \Weboldalnet\FlipCity\Models\DailySummary::firstOrCreate(['summary_date' => date('Y-m-d')])
-            ->increment('total_cash', $totalCost);
+            ->increment('total_cash', $paidAmount);
 
         $entry->update([
             'is_failed' => false,

@@ -60,6 +60,19 @@ class Entry extends Model
         return $this->hasOne(Invoice::class, 'entry_id');
     }
 
+    /**
+     * Cash payments are rounded to the nearest 5 Ft (1-2 down, 3-4 and 6-7 to 5, 8-9 up).
+     */
+    public static function cashRound(float $amount): float
+    {
+        return round($amount / 5) * 5;
+    }
+
+    public static function payableAmount(float $fee, string $paymentMethod): float
+    {
+        return $paymentMethod === 'cash' ? self::cashRound($fee) : $fee;
+    }
+
     public function calculateCurrentCost(): float
     {
         return $this->costBreakdown()['total'];

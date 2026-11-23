@@ -233,11 +233,25 @@ startCamera();
         updateElapsedTimes();
     });
 
+    function cashRound(value) {
+        return Math.round(value / 5) * 5;
+    }
+
+    function showPayable($amount, $note, method) {
+        var fee = parseFloat($amount.data('fee')) || 0;
+        var payable = method === 'cash' ? cashRound(fee) : fee;
+        var rounded = payable !== fee;
+
+        $amount.text(numberFormat(payable)).data('payable', payable);
+        $note.text(rounded ? 'Készpénznél 5 Ft-ra kerekítve, a pontos díj ' + numberFormat(fee) + ' Ft.' : '').toggle(rounded);
+    }
+
     function openCheckout(entryId) {
         timerPaused = true;
         currentEntryId = entryId;
         $('#checkout_entry_id').val(entryId);
-        $('#checkout_amount').text('...');
+        $('#checkout_amount').text('...').data('fee', 0).data('payable', 0);
+        $('#checkout_rounding').hide();
         $('#checkout_duration').text('');
         $('#cash_received').val('');
         $('#change_amount').text('0');
@@ -275,7 +289,8 @@ startCamera();
                         $('#checkout_min_note').hide();
                     }
 
-                    $('#checkout_amount').text(numberFormat(amount));
+                    $('#checkout_amount').data('fee', amount);
+                    showPayable($('#checkout_amount'), $('#checkout_rounding'), $('input[name="payment_method"]:checked').val());
                     $('#checkout_duration').text(duration + ' perc, ' + guests + ' fő');
                     $('#checkoutModal').modal('show');
                 } else {
@@ -292,7 +307,7 @@ startCamera();
 
     // Visszajáró számolás
     $('#cash_received').on('input', function () {
-        var amount = parseFloat($('#checkout_amount').text().replace(/\s/g, '')) || 0;
+        var amount = parseFloat($('#checkout_amount').data('payable')) || 0;
         var received = parseFloat($(this).val()) || 0;
         var change = Math.max(0, received - amount);
         $('#change_amount').text(numberFormat(change));
@@ -300,6 +315,8 @@ startCamera();
 
     // Fizetési mód váltás
     $('input[name="payment_method"]').on('change', function () {
+        showPayable($('#checkout_amount'), $('#checkout_rounding'), $(this).val());
+        $('#cash_received').trigger('input');
         if ($(this).val() === 'card') {
             $('#cash_details').hide();
         } else {
@@ -314,7 +331,8 @@ startCamera();
         var paymentMethod = $('input[name="payment_method"]:checked').val();
         var cashReceived = $('#cash_received').val();
         var entryId = $('#checkout_entry_id').val();
-        var amount = parseFloat($('#checkout_amount').text().replace(/\s/g, '')) || 0;
+        var amount = parseFloat($('#checkout_amount').data('payable')) || 0;
+        var fee = parseFloat($('#checkout_amount').data('fee')) || 0;
         var duration = $('#checkout_duration').text(); // Ezt a szerver válaszából kaptuk
 
         if (paymentMethod === 'cash' && (!cashReceived || parseFloat(cashReceived) < amount)) {
@@ -333,7 +351,7 @@ startCamera();
                 entry_id: entryId,
                 payment_method: paymentMethod,
                 cash_received: cashReceived || null,
-                final_cost: amount // Beküldjük a rögzített összeget
+                final_cost: fee
             },
             success: function (response) {
                 if (response.success) {
@@ -417,7 +435,8 @@ startCamera();
             success: function (response) {
                 $btn.prop('disabled', false).html('<i class="fas fa-calculator mr-1"></i> Összeg számítása');
                 if (response.success) {
-                    $('#partial_checkout_amount').text(numberFormat(response.total_cost));
+                    $('#partial_checkout_amount').data('fee', response.total_cost);
+                    showPayable($('#partial_checkout_amount'), $('#partial_checkout_rounding'), $('input[name="partial_payment_method"]:checked').val());
                     $('#partial_payment_details').fadeIn();
                     $('#partial_calc_btn').hide();
                     $('#partial_confirm_btn').show();
@@ -437,7 +456,7 @@ startCamera();
 
     // Részleges visszajáró számolás
     $('#partial_cash_received').on('input', function () {
-        var amount = parseFloat($('#partial_checkout_amount').text().replace(/\s/g, '')) || 0;
+        var amount = parseFloat($('#partial_checkout_amount').data('payable')) || 0;
         var received = parseFloat($(this).val()) || 0;
         var change = Math.max(0, received - amount);
         $('#partial_change_amount').text(numberFormat(change));
@@ -445,6 +464,8 @@ startCamera();
 
     // Részleges fizetési mód váltás
     $('input[name="partial_payment_method"]').on('change', function () {
+        showPayable($('#partial_checkout_amount'), $('#partial_checkout_rounding'), $(this).val());
+        $('#partial_cash_received').trigger('input');
         if ($(this).val() === 'card') {
             $('#partial_cash_details').hide();
         } else {
@@ -459,7 +480,8 @@ startCamera();
         var leavingCount = $('#partial_leaving_count').val();
         var paymentMethod = $('input[name="partial_payment_method"]:checked').val();
         var cashReceived = $('#partial_cash_received').val();
-        var amount = parseFloat($('#partial_checkout_amount').text().replace(/\s/g, '')) || 0;
+        var amount = parseFloat($('#partial_checkout_amount').data('payable')) || 0;
+        var fee = parseFloat($('#partial_checkout_amount').data('fee')) || 0;
 
         if (paymentMethod === 'cash' && (!cashReceived || parseFloat(cashReceived) < amount)) {
             alert('A kapott összeg nem lehet kevesebb a fizetendőnél (' + numberFormat(amount) + ' Ft)!');
@@ -478,7 +500,7 @@ startCamera();
                 leaving_children: parseInt($('#partial_leaving_children').val()) || 0,
                 payment_method: paymentMethod,
                 cash_received: cashReceived || null,
-                final_cost: amount
+                final_cost: fee
             },
             success: function (response) {
                 if (response.success) {

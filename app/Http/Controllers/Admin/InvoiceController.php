@@ -40,7 +40,7 @@ class InvoiceController extends FlipCityAdminController
             $entry->save();
         }
 
-        $amount = $entry->total_cost;
+        $amount = Entry::payableAmount((float) $entry->total_cost, $validated['payment_method']);
         $change = 0;
 
         if ($validated['payment_method'] === 'cash') {

@@ -337,6 +337,7 @@
                             <span id="checkout_amount">0</span> Ft
                         </div>
                         <small class="fc-amount-sub" id="checkout_duration"></small>
+                        <small class="fc-amount-sub" id="checkout_rounding" style="display: none;"></small>
                     </div>
 
                     <div class="form-group">
@@ -413,6 +414,7 @@
                             <div class="fc-amount-value">
                                 <span id="partial_checkout_amount">0</span> Ft
                             </div>
+                            <small class="fc-amount-sub" id="partial_checkout_rounding" style="display: none;"></small>
                         </div>
 
                         <div class="form-group">
