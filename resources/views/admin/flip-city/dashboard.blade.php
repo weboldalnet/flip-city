@@ -357,7 +357,7 @@
                         <div class="form-group">
                             <label for="cash_received">Kapott összeg (Ft)</label>
                             <input type="number" name="cash_received" id="cash_received"
-                                   class="form-control form-control-lg" min="0" step="100" placeholder="0">
+                                   class="form-control form-control-lg" min="0" step="1" placeholder="0">
                         </div>
                         <div class="alert alert-success">
                             Visszajáró: <strong><span id="change_amount">0</span> Ft</strong>
@@ -433,7 +433,7 @@
                             <div class="form-group">
                                 <label for="partial_cash_received">Kapott összeg (Ft)</label>
                                 <input type="number" id="partial_cash_received"
-                                       class="form-control form-control-lg" min="0" step="100" placeholder="0">
+                                       class="form-control form-control-lg" min="0" step="1" placeholder="0">
                             </div>
                             <div class="alert alert-success">
                                 Visszajáró: <strong><span id="partial_change_amount">0</span> Ft</strong>
