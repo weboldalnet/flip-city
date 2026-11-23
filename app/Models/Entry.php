@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property float|null $child_rate
  * @property bool $is_auto_closed
  * @property bool $is_failed
+ * @property string|null $auto_close_reason
  * @property float|null $total_cost
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -33,7 +34,7 @@ class Entry extends Model
     protected $fillable = [
         'user_id', 'start_time', 'end_time', 'rate',
         'guest_count', 'companions_count', 'is_auto_closed', 'is_failed', 'total_cost',
-        'children_count', 'child_rate'
+        'children_count', 'child_rate', 'auto_close_reason'
     ];
 
     protected $casts = [

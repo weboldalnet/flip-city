@@ -36,6 +36,12 @@
         </div>
     @endif
 
+    @if($checkinNotice ?? null)
+        <div class="alert alert-warning small py-2">
+            <i class="fas fa-exclamation-triangle mr-1"></i>{{ $checkinNotice }}
+        </div>
+    @endif
+
     <div class="row">
         <!-- Alapadatok -->
         <div class="col-xl-4 col-lg-5 mb-4">
@@ -53,6 +59,13 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    @if($user->is_blocked && ($user->blocked_reason || $user->blocked_at))
+                        <div class="alert alert-danger small py-2 mb-3">
+                            <i class="fas fa-lock mr-1"></i>
+                            @if($user->blocked_at)<strong>Tiltva: {{ $user->blocked_at->format('Y.m.d. H:i') }}</strong>@endif
+                            @if($user->blocked_reason)<span class="d-block">{{ $user->blocked_reason }}</span>@endif
+                        </div>
+                    @endif
                     <dl class="row mb-0">
                         <dt class="col-5 text-muted small">Azonosító</dt>
                         <dd class="col-7">#{{ $user->id }}</dd>
@@ -188,10 +201,13 @@
                                         @if($entry->end_time)
                                             {{ $entry->end_time->format('Y.m.d H:i') }}
                                             @if($entry->is_auto_closed)
-                                                <span class="badge badge-warning badge-sm ml-1" title="Automatikusan zárva">auto</span>
+                                                <span class="badge badge-warning badge-sm ml-1" title="{{ $entry->auto_close_reason ? 'A rendszer zárta: ' . $entry->auto_close_reason : 'Automatikusan zárva' }}">rendszer zárta</span>
                                             @endif
                                             @if($entry->is_failed)
-                                                <span class="badge badge-danger badge-sm ml-1">meghiúsult</span>
+                                                <span class="badge badge-danger badge-sm ml-1">{{ $entry->is_auto_closed ? 'nem fizetett' : 'meghiúsult' }}</span>
+                                            @endif
+                                            @if($entry->is_auto_closed && $entry->auto_close_reason)
+                                                <span class="fc-sub">{{ $entry->auto_close_reason }}</span>
                                             @endif
                                         @else
                                             <span class="badge badge-success fs-14 ">Aktív</span>
@@ -387,6 +403,9 @@
                 @csrf
                 <input type="hidden" name="user_id" value="{{ $user->id }}">
                 <div class="modal-body">
+                    @if($checkinNotice ?? null)
+                        <p class="alert alert-warning small py-2 mb-3"><i class="fas fa-exclamation-triangle mr-1"></i>{{ $checkinNotice }}</p>
+                    @endif
                     @include('flip-city::admin.flip-city.partials.checkin-counts', ['prefix' => 'show'])
                 </div>
                 <div class="modal-footer">

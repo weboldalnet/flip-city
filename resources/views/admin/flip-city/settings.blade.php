@@ -91,6 +91,59 @@
                             </div>
                         </div>
 
+                        <hr>
+
+                        <h6 class="font-weight-bold text-primary mb-3">Automatikus lezárás</h6>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Automatikus lezárás</label>
+                            <div class="col-sm-8">
+                                <select name="auto_close_enabled" class="form-control">
+                                    <option value="1" {{ old('auto_close_enabled', $flipCitySettings['auto_close']['enabled'] ?? true) ? 'selected' : '' }}>Bekapcsolva</option>
+                                    <option value="0" {{ !old('auto_close_enabled', $flipCitySettings['auto_close']['enabled'] ?? true) ? 'selected' : '' }}>Kikapcsolva</option>
+                                </select>
+                                <small class="text-muted">A rendszer 5 percenként lezárja azokat a belépéseket, amelyeknél a kiléptetés elmaradt. A lezárt belépés nem fizetettként kerül az ügyfél előzményeibe, a lezárásig számolt összeggel.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Lezárás bent töltött idő után (óra)</label>
+                            <div class="col-sm-8">
+                                <input type="number" name="auto_close_hours" class="form-control" value="{{ old('auto_close_hours', $flipCitySettings['auto_close']['hours'] ?? 3) }}" min="0" max="24" step="0.5" required>
+                                <small class="text-muted">A belépéstől ennyi óra után zár le, a díjat eddig az időpontig számolja. 0 esetén nem zár idő alapján.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Napi zárási időpont</label>
+                            <div class="col-sm-8">
+                                <input type="time" name="auto_close_time" class="form-control" value="{{ old('auto_close_time', $flipCitySettings['auto_close']['time'] ?? '') }}" aria-label="Napi zárási időpont">
+                                <small class="text-muted">Ebben az időpontban minden bent maradt belépést lezár (például a nyitvatartás végén). Üresen hagyva nem zár időpont alapján. Ha mindkettő meg van adva, az előbb bekövetkező számít.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Ügyfél tiltása lezáráskor</label>
+                            <div class="col-sm-8">
+                                <select name="auto_close_block_user" class="form-control">
+                                    <option value="1" {{ old('auto_close_block_user', $flipCitySettings['auto_close']['block_user'] ?? true) ? 'selected' : '' }}>Igen, tiltsa le</option>
+                                    <option value="0" {{ !old('auto_close_block_user', $flipCitySettings['auto_close']['block_user'] ?? true) ? 'selected' : '' }}>Nem, csak jelölje</option>
+                                </select>
+                                <small class="text-muted">Tiltás esetén az ügyfél nem léptethető be és a profiljába sem tud belépni, amíg az adatlapján fel nem oldod. A tiltás oka az adatlapon látszik.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label font-weight-bold">Jelzés a következő beléptetéskor</label>
+                            <div class="col-sm-8">
+                                <select name="auto_close_warn_on_checkin" class="form-control">
+                                    <option value="1" {{ old('auto_close_warn_on_checkin', $flipCitySettings['auto_close']['warn_on_checkin'] ?? true) ? 'selected' : '' }}>Bekapcsolva</option>
+                                    <option value="0" {{ !old('auto_close_warn_on_checkin', $flipCitySettings['auto_close']['warn_on_checkin'] ?? true) ? 'selected' : '' }}>Kikapcsolva</option>
+                                </select>
+                                <small class="text-muted">Beléptetéskor rövid figyelmeztetés jelzi, ha az ügyfél előző belépését a rendszer zárta le, és mennyi a rendezetlen összeg.</small>
+                            </div>
+                        </div>
+
                         <div class="mt-4">
                             <button type="submit" class="btn btn-primary px-4">Mentés</button>
                         </div>

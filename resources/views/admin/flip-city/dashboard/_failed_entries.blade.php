@@ -27,7 +27,12 @@
                                         {{ $entry->user->name ?? '–' }}
                                     </a>
                                 </td>
-                                <td class="small">{{ $entry->start_time->format('Y.m.d') }}</td>
+                                <td class="small">
+                                    {{ $entry->start_time->format('Y.m.d') }}
+                                    @if($entry->is_auto_closed)
+                                        <span class="badge badge-warning badge-sm ml-1" title="{{ $entry->auto_close_reason ? 'A rendszer zárta: ' . $entry->auto_close_reason : 'Automatikusan zárva' }}">rendszer zárta</span>
+                                    @endif
+                                </td>
                                 <td>
                                     {{ $entry->start_time->format('H:i') }} - 
                                     <span class="text-danger">{{ $entry->end_time ? $entry->end_time->format('H:i') : $entry->updated_at->format('H:i') }}</span>

@@ -128,6 +128,7 @@ startCamera();
             '<div class="card-body">' +
             '<h6 class="card-title font-weight-bold text-primary mb-3"><i class="fas fa-user-check mr-2"></i>' + escapeHtml(user.name) + '</h6>' +
             (booking ? '<div class="alert alert-success small py-2 mb-3"><i class="fas fa-calendar-check mr-1"></i>Találtunk mai foglalást (' + guestCount + ' fő)!</div>' : '') +
+            (data.notice ? '<div class="alert alert-warning small py-2 mb-3"><i class="fas fa-exclamation-triangle mr-1"></i>' + escapeHtml(data.notice) + '</div>' : '') +
             '<div class="row">' +
             '<div class="col-sm-4">' +
             '<div class="form-group mb-3">' +
@@ -209,6 +210,8 @@ startCamera();
 
         $('#checkin_user_id').val($(this).data('id'));
         $('#checkin_user_name').text($(this).data('name'));
+        var notice = $(this).data('notice') || '';
+        $('#checkin_notice').text(notice).toggleClass('d-none', !notice);
         $('#checkin_guest_count').val($(this).data('guests') || 1);
         $('#checkin_booking_id').val(bookingId);
         $('#checkin_children_count').val(0);

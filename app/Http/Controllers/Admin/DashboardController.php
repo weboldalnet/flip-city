@@ -22,7 +22,7 @@ class DashboardController extends FlipCityAdminController
         $activeEntries = Entry::with('user')->whereNull('end_time')->get();
         $todaySummary = DailySummary::where('summary_date', date('Y-m-d'))->first();
 
-        $todayBookings = Booking::with('user')
+        $todayBookings = Booking::with(['user' => fn ($query) => $query->withCheckinNotice()])
             ->where('booking_date', date('Y-m-d'))
             ->where('status', 'pending')
             ->orderBy('booking_time', 'asc')
@@ -163,7 +163,23 @@ class DashboardController extends FlipCityAdminController
             'booking_until' => 'required|date_format:H:i|after:booking_from',
             'profile_qr_print_text' => 'nullable|string',
             'show_profile_booking' => 'required|boolean',
+            'auto_close_enabled' => 'required|boolean',
+            'auto_close_hours' => 'required|numeric|min:0|max:24',
+            'auto_close_time' => 'nullable|date_format:H:i',
+            'auto_close_block_user' => 'required|boolean',
+            'auto_close_warn_on_checkin' => 'required|boolean',
+        ], [
+            'auto_close_hours.max' => 'A lezárási idő legfeljebb 24 óra lehet.',
+            'auto_close_time.date_format' => 'A napi zárási időpont formátuma ÓÓ:PP.',
         ]);
+
+        if ($validated['auto_close_enabled'] && (float) $validated['auto_close_hours'] <= 0 && empty($validated['auto_close_time'])) {
+            return redirect()->back()->withInput()->withErrors([
+                'auto_close_hours' => 'Bekapcsolt automatikus lezárásnál adj meg bent töltött időt vagy napi zárási időpontot.',
+            ]);
+        }
+
+        $validated['auto_close_time'] = $validated['auto_close_time'] ?? '';
 
         foreach ($validated as $key => $value) {
             FlipCitySettings::set($key, $value);

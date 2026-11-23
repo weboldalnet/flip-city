@@ -617,6 +617,15 @@
     text-decoration: line-through;
 }
 
+.flipcity .fc-entries-table tr.is-unpaid td {
+    color: inherit;
+}
+
+.flipcity .fc-entries-table tr.is-unpaid .fc-entry-amount {
+    color: var(--fc-bad);
+    text-decoration: none;
+}
+
 .flipcity .card-footer nav {
     display: flex;
     justify-content: center;

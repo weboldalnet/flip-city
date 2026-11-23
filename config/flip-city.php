@@ -10,7 +10,11 @@ return [
     |
     */
 
-    'auto_close_hours' => 3,
+    'auto_close_enabled' => true,
+    'auto_close_hours' => 3, // Bent töltött idő, ami után a rendszer lezárja (0 = nem zár idő alapján)
+    'auto_close_time' => '', // Napi zárási időpont (HH:MM, üres = nincs)
+    'auto_close_block_user' => true,
+    'auto_close_warn_on_checkin' => true,
     'default_rate' => 1500, // HUF/óra példa
     'currency' => 'HUF',
     'billing_enabled' => env('FLIPCITY_BILLING_ENABLED', false),

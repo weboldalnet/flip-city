@@ -204,6 +204,7 @@
                 <input type="hidden" name="booking_id" id="checkin_booking_id">
                 <div class="modal-body">
                     <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
+                    <p id="checkin_notice" class="alert alert-warning small py-2 mb-3 d-none"></p>
                     @include('flip-city::admin.flip-city.partials.checkin-counts', ['prefix' => 'checkin'])
                 </div>
                 <div class="modal-footer">

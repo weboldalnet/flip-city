@@ -49,6 +49,7 @@ class FlipCityServiceProvider extends ServiceProvider
                 'booking_until' => FlipCitySettings::get('booking_until', config('flip-city.booking_until', '16:00')),
                 'profile_qr_print_text' => FlipCitySettings::get('profile_qr_print_text', config('flip-city.profile_qr_print_text', 'Kérjük, mutassa be ezt a kódot a belépéshez!')),
                 'show_profile_booking' => FlipCitySettings::get('show_profile_booking', config('flip-city.show_profile_booking', true)),
+                'auto_close' => \Weboldalnet\FlipCity\Support\AutoClose::settings(),
                 'billing_enabled' => config('flip-city.billing_enabled', true),
                 'invoice_enabled' => config('flip-city.invoice_enabled', true),
                 'assets_published' => file_exists(public_path('packages/flip-city')),

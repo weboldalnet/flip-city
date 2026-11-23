@@ -120,6 +120,7 @@
                                 <div class="fc-actions">
                                     <button type="button" class="fc-act fc-act-go checkin-manual-btn"
                                             data-id="{{ $user->id }}" data-name="{{ $user->name }}"
+                                            data-notice="{{ $user->checkinNotice() }}"
                                             @if(!$user->is_active || $user->is_blocked) disabled @endif
                                             title="{{ !$user->is_active || $user->is_blocked ? 'Letiltott vagy inaktív ügyfél nem léptethető be' : 'Beléptetés (manuális)' }}">
                                         <i class="fas fa-sign-in-alt"></i><span>Beléptet</span>
@@ -247,6 +248,7 @@
                 <input type="hidden" name="user_id" id="checkin_user_id">
                 <div class="modal-body">
                     <p id="checkin_user_name" class="font-weight-bold mb-3"></p>
+                    <p id="checkin_notice" class="alert alert-warning small py-2 mb-3 d-none"></p>
                     @include('flip-city::admin.flip-city.partials.checkin-counts', ['prefix' => 'checkin'])
                 </div>
                 <div class="modal-footer">

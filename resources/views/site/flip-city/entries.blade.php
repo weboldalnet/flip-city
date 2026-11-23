@@ -36,7 +36,7 @@
                         </thead>
                         <tbody>
                             @forelse($entries as $entry)
-                            <tr class="{{ $entry->is_failed ? 'is-failed' : (!$entry->end_time ? 'is-active' : '') }}">
+                            <tr class="{{ $entry->is_failed ? ($entry->is_auto_closed ? 'is-failed is-unpaid' : 'is-failed') : (!$entry->end_time ? 'is-active' : '') }}">
                                 <td data-label="Dátum">
                                     <span class="fc-entry-date">{{ $entry->start_time->format('Y.m.d.') }}</span>
                                     <span class="fc-entry-time">{{ $entry->start_time->format('H:i') }} – {{ $entry->end_time ? $entry->end_time->format('H:i') : '…' }}</span>
@@ -56,7 +56,9 @@
                                     {{ number_format($entry->total_cost ?: $entry->calculateCurrentCost(), 0, ',', ' ') }} Ft
                                 </td>
                                 <td data-label="Állapot" class="text-right">
-                                    @if($entry->is_failed)
+                                    @if($entry->is_failed && $entry->is_auto_closed)
+                                        <span class="badge badge-danger" title="A kiléptetés elmaradt, a rendszer zárta le">Rendezetlen</span>
+                                    @elseif($entry->is_failed)
                                         <span class="badge badge-danger">Meghiúsult</span>
                                     @elseif(!$entry->end_time)
                                         <span class="badge badge-primary">Aktív</span>

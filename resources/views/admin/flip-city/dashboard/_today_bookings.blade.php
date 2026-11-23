@@ -25,6 +25,7 @@
                             <button class="fc-act fc-act-go checkin-manual-btn" 
                                     data-id="{{ $booking->user_id }}" 
                                     data-name="{{ $booking->user->name }}"
+                                    data-notice="{{ $booking->user->checkinNotice() }}"
                                     data-guests="{{ $booking->guest_count }}"
                                     data-booking-id="{{ $booking->id }}">
                                 <i class="fas fa-sign-in-alt"></i><span>Beléptetés</span>

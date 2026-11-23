@@ -34,7 +34,7 @@ class UserController extends FlipCityAdminController
             }
         }
 
-        $users = $query->withCount(['entries', 'entries as failed_entries_count' => function ($q) {
+        $users = $query->withCheckinNotice()->withCount(['entries', 'entries as failed_entries_count' => function ($q) {
             $q->where('is_failed', true);
         }])->orderBy('created_at', 'desc')->paginate(20);
 
@@ -47,8 +47,9 @@ class UserController extends FlipCityAdminController
         $bookings = $user->bookings()->orderBy('created_at', 'desc')->take(10)->get();
         $invoices = $user->invoices()->orderBy('created_at', 'desc')->get();
         $activeEntry = $user->entries()->whereNull('end_time')->first();
+        $checkinNotice = ($activeEntry || $user->is_blocked) ? null : $user->checkinNotice();
 
-        return view('flip-city::admin.flip-city.users.show', compact('user', 'entries', 'bookings', 'invoices', 'activeEntry'));
+        return view('flip-city::admin.flip-city.users.show', compact('user', 'entries', 'bookings', 'invoices', 'activeEntry', 'checkinNotice'));
     }
 
     public function edit(User $user)
@@ -110,6 +111,8 @@ class UserController extends FlipCityAdminController
         }
 
         $user->is_blocked = !$user->is_blocked;
+        $user->blocked_at = $user->is_blocked ? now() : null;
+        $user->blocked_reason = null;
         $user->save();
 
         $status = $user->is_blocked ? 'letiltva' : 'feloldva';

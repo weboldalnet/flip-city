@@ -56,7 +56,7 @@ class EntryController extends FlipCityAdminController
         }
 
         if (!$user->is_active || $user->is_blocked) {
-            return redirect()->back()->with('error', 'A felhasználó inaktív vagy le van tiltva.');
+            return redirect()->back()->with('error', $this->unavailableMessage($user));
         }
 
         $activeEntry = Entry::where('user_id', $user->id)->whereNull('end_time')->first();
@@ -83,7 +83,7 @@ class EntryController extends FlipCityAdminController
         }
 
         if (!$user->is_active || $user->is_blocked) {
-            return response()->json(['success' => false, 'message' => 'Fiók letiltva vagy inaktív']);
+            return response()->json(['success' => false, 'message' => $this->unavailableMessage($user)]);
         }
 
         $activeEntry = Entry::where('user_id', $user->id)->whereNull('end_time')->first();
@@ -119,6 +119,7 @@ class EntryController extends FlipCityAdminController
                 'balance' => $user->balance,
             ],
             'booking' => $booking,
+            'notice'  => $user->checkinNotice(),
             'message' => $booking ? 'Találtunk mai foglalást!' : 'Nincs mai foglalás.',
         ]);
     }
@@ -139,7 +140,7 @@ class EntryController extends FlipCityAdminController
         $user = User::findOrFail($validated['user_id']);
 
         if (!$user->is_active || $user->is_blocked) {
-            return redirect()->back()->with('error', 'A felhasználó inaktív vagy le van tiltva.');
+            return redirect()->back()->with('error', $this->unavailableMessage($user));
         }
 
         $activeEntry = Entry::where('user_id', $user->id)->whereNull('end_time')->first();
@@ -176,7 +177,7 @@ class EntryController extends FlipCityAdminController
         $user = User::where('qr_code_token', $validated['qr_code_token'])->firstOrFail();
 
         if (!$user->is_active || $user->is_blocked) {
-            return response()->json(['success' => false, 'message' => 'Fiók letiltva vagy inaktív']);
+            return response()->json(['success' => false, 'message' => $this->unavailableMessage($user)]);
         }
 
         $entry = $this->createEntry($user, $validated);
@@ -195,6 +196,15 @@ class EntryController extends FlipCityAdminController
             'message' => 'Sikeres belépés! Időszámláló elindítva.',
             'entry'   => $entry,
         ]);
+    }
+
+    private function unavailableMessage(User $user): string
+    {
+        if (!$user->is_blocked) {
+            return 'A felhasználó fiókja inaktív.';
+        }
+
+        return $user->blocked_reason ? 'A fiók le van tiltva. ' . $user->blocked_reason : 'A fiók le van tiltva.';
     }
 
     private function dayClosed(): bool
@@ -443,6 +453,11 @@ class EntryController extends FlipCityAdminController
             'total_cost' => $totalCost
         ]);
 
-        return redirect()->back()->with('success', 'A belépés sikeresen visszaállítva és a kasszához adva.');
+        $message = 'A belépés sikeresen visszaállítva és a kasszához adva.';
+        if ($entry->is_auto_closed && $entry->user && $entry->user->is_blocked) {
+            $message .= ' Az ügyfél tiltása megmaradt, az adatlapján oldható fel.';
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 }
